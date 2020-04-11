@@ -8,11 +8,11 @@
             "internalConsoleOptions": "openOnSessionStart",
             "cwd": "${workspaceRoot}",
             "executable": "./build/hypnos.elf",
-            "name": "Debug NRF52832_XXAA",
+            "name": "Debug NRF52840_XXAA",
             "request": "launch",
             "type": "cortex-debug",
             "servertype": "jlink",
-            "device": "NRF52832_XXAA",
+            "device": "NRF52840_XXAA",
             "preLaunchTask": "build and flash"
         }
     ]

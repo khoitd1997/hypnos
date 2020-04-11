@@ -21,4 +21,4 @@ include_directories(src)
 add_subdirectory(src)
 
 add_executable(${PROJECT_NAME}.elf ${NRF_SRCS} src/firmware_main.c)
-target_link_libraries(${PROJECT_NAME}.elf PUBLIC utils dof)
+target_link_libraries(${PROJECT_NAME}.elf)

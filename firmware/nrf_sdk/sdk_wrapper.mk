@@ -8,6 +8,7 @@ make_build_dir := ${current_dir}/make_build
 base_makefile_dir := ${current_dir}/base_makefile
 
 $(shell mkdir -p ${make_build_dir})
+$(shell rm -rf ${make_build_dir}/*)
 $(shell cp ${base_makefile_dir}/*.mk ${make_build_dir})
 $(shell find $(make_build_dir) -type f -exec sed -i "s|SDK_ROOT := .*|SDK_ROOT := $(current_dir)/sdk|g" {} \;)
 $(shell find $(make_build_dir) -type f -exec sed -i "s|PROJ_DIR := .*|PROJ_DIR := |g" {} \;)
