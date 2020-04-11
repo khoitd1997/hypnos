@@ -40,3 +40,5 @@ I used to have a script that runs every couple hours to turn the computer off to
 ![](image/2020-04-10-20-41-07.png)
 
 While scanning in the foreground will likely immediately discover a device advertising next to it, discovery in the background can take up to ~60 times longer.
+
+[Oscilloscope for current measurement](https://infocenter.nordicsemi.com/index.jsp?topic=%2Fug_nrf52832_dk%2FUG%2Fnrf52_DK%2Fhw_meas_oscilloscope.html&anchor=hw_meas_oscilloscope)
