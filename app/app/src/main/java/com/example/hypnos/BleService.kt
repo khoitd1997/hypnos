@@ -11,7 +11,6 @@ import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.example.hypnos.ui.home.ScanResultsAdapter
-import com.jakewharton.rx.ReplayingShare
 import com.polidea.rxandroidble2.*
 import com.polidea.rxandroidble2.exceptions.BleScanException
 import com.polidea.rxandroidble2.scan.ScanFilter
@@ -19,8 +18,8 @@ import com.polidea.rxandroidble2.scan.ScanSettings
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
-import java.util.*
 import java.util.concurrent.TimeUnit
+
 
 class BleService : Service() {
     companion object {
@@ -93,16 +92,13 @@ class BleService : Service() {
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        Log.v("event", "ble service onStartCommand")
-        when (intent.action) {
-            ACTION_STOP_FOREGROUND_SERVICE -> stopForegroundService()
-        }
+        Log.d("event", "ble service onStartCommand")
 
-        return START_STICKY
+        return START_REDELIVER_INTENT
     }
 
     private fun stopForegroundService() {
-        Log.v("event", "Stop foreground service.")
+        Log.d("event", "Stop foreground service.")
         stopForeground(true)
         stopSelf()
     }
@@ -110,6 +106,11 @@ class BleService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         stateDisposable?.dispose()
+
+        val broadcastIntent = Intent()
+        broadcastIntent.action = "restartservice"
+        broadcastIntent.setClass(this, Restarter::class.java)
+        this.sendBroadcast(broadcastIntent)
     }
 
     private lateinit var mMessenger: Messenger
