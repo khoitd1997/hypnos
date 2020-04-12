@@ -3,7 +3,9 @@ package com.example.hypnos
 import android.app.*
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.*
+import android.preference.PreferenceManager
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
@@ -15,16 +17,18 @@ import com.polidea.rxandroidble2.scan.ScanSettings
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
-import androidx.core.content.ContextCompat.getSystemService
-
-import android.icu.lang.UCharacter.GraphemeClusterBreak.T
+import kotlin.random.Random
+import kotlin.random.nextUInt
 
 
 class BleService : Service() {
     companion object {
         const val CHANNEL_ID = "BleServiceChannel"
         const val NOTIFICATION_ID = 1
+        const val SHARED_PREFERENCE_FILE_NAME = "ble_shared_prefs"
 
         const val ACTION_START_FOREGROUND_SERVICE = "ACTION_START_FOREGROUND_SERVICE"
         const val ACTION_STOP_FOREGROUND_SERVICE = "ACTION_STOP_FOREGROUND_SERVICE"
@@ -51,6 +55,10 @@ class BleService : Service() {
     private var connectDisposable: Disposable? = null
     private var stateDisposable: Disposable? = null
 
+    lateinit var sharedPreferences: SharedPreferences
+
+    var testDisposable: Disposable? = null
+
     override fun onCreate() {
         super.onCreate()
 
@@ -76,8 +84,27 @@ class BleService : Service() {
             manager!!.createNotificationChannel(serviceChannel)
         }
 
-        val notification = buildNotification(false, 15, 20, "14:20")
+        this.sharedPreferences = applicationContext.getSharedPreferences(
+            SHARED_PREFERENCE_FILE_NAME,
+            Context.MODE_PRIVATE
+        )
 
+        testDisposable = Observable.interval(20, 10, TimeUnit.SECONDS)
+            .observeOn(AndroidSchedulers.mainThread())
+            .doFinally { testDisposable = null }
+            .subscribe {
+                val syncTime = getSyncTime()
+
+                updateDeviceData(
+                    Random.nextBoolean(),
+                    Random.nextInt(10, 120),
+                    Random.nextInt(0, 100),
+                    syncTime
+                )
+                updateNotification()
+            }
+
+        val notification = buildNotification()
         startForeground(NOTIFICATION_ID, notification)
         Log.v("event", "onCreate of ble service")
     }
@@ -160,15 +187,47 @@ class BleService : Service() {
         return mMessenger.binder
     }
 
-    private fun buildNotification(isBreakPhase: Boolean, minuteLeftInPhase: Int, batteryPercent: Int, syncTime: String): Notification {
+    private fun getSyncTime(): String {
+        val current = LocalDateTime.now()
+        val formatter = DateTimeFormatter.ofPattern("HH:mm")
+        return current.format(formatter)
+    }
+
+    private fun updateDeviceData(
+        isBreakPhase: Boolean,
+        minuteLeftInPhase: Int,
+        batteryPercent: Int,
+        syncTime: String
+    ) {
+        with(sharedPreferences.edit()) {
+            putBoolean("isBreakPhase", isBreakPhase)
+            putInt("timeLeft", minuteLeftInPhase)
+            putInt("battery", batteryPercent)
+            putString("syncTime", syncTime)
+
+            commit()
+        }
+    }
+
+    private fun buildNotification(): Notification {
         val notificationIntent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
             this,
             0, notificationIntent, 0
         )
         val title =
-             "$minuteLeftInPhase minutes till " + (if (isBreakPhase) "break end" else "break")
-        val content = "Battery: $batteryPercent%\nLast Sync: $syncTime"
+            "${sharedPreferences.getInt(
+                "timeLeft",
+                -1
+            )} minutes till " + (if (sharedPreferences.getBoolean(
+                    "isBreakPhase",
+                    false
+                )
+            ) "work" else "break")
+        val content = "Battery: ${sharedPreferences.getInt(
+            "battery",
+            -1
+        )}%" + "\nLast Sync: ${sharedPreferences.getString("syncTime", "None")}"
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(title)
@@ -177,6 +236,14 @@ class BleService : Service() {
             .setStyle(NotificationCompat.BigTextStyle().bigText(content))
             .setContentIntent(pendingIntent)
             .build()
+    }
+
+    private fun updateNotification() {
+        val notification = buildNotification()
+        val mNotificationManager: NotificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        mNotificationManager.notify(NOTIFICATION_ID, notification)
     }
 
     private fun connectDevice(macAddr: String) {
@@ -195,11 +262,7 @@ class BleService : Service() {
                 .subscribe(
                     {
                         Log.d("ble", "connection received")
-                        val notification = buildNotification(true, 15, 20, "14:20")
-                        val mNotificationManager: NotificationManager =
-                            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-                        mNotificationManager.notify(NOTIFICATION_ID, notification)
+                        updateNotification()
                     }, { Log.d("ble", "connection failed") })
                 .let { connectDisposable = it }
 //                .doFinally {
