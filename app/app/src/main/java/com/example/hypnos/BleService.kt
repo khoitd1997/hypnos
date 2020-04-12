@@ -1,9 +1,6 @@
 package com.example.hypnos
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
-import android.app.Service
+import android.app.*
 import android.content.Context
 import android.content.Intent
 import android.os.*
@@ -19,11 +16,15 @@ import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import java.util.concurrent.TimeUnit
+import androidx.core.content.ContextCompat.getSystemService
+
+import android.icu.lang.UCharacter.GraphemeClusterBreak.T
 
 
 class BleService : Service() {
     companion object {
         const val CHANNEL_ID = "BleServiceChannel"
+        const val NOTIFICATION_ID = 1
 
         const val ACTION_START_FOREGROUND_SERVICE = "ACTION_START_FOREGROUND_SERVICE"
         const val ACTION_STOP_FOREGROUND_SERVICE = "ACTION_STOP_FOREGROUND_SERVICE"
@@ -75,19 +76,9 @@ class BleService : Service() {
             manager!!.createNotificationChannel(serviceChannel)
         }
 
-        val notificationIntent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            0, notificationIntent, 0
-        )
+        val notification = buildNotification(false, 15, 20, "14:20")
 
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Hypnos")
-            .setContentText("Hypnos working with BLE device")
-            .setContentIntent(pendingIntent)
-            .build()
-
-        startForeground(1, notification)
+        startForeground(NOTIFICATION_ID, notification)
         Log.v("event", "onCreate of ble service")
     }
 
@@ -169,6 +160,25 @@ class BleService : Service() {
         return mMessenger.binder
     }
 
+    private fun buildNotification(isBreakPhase: Boolean, minuteLeftInPhase: Int, batteryPercent: Int, syncTime: String): Notification {
+        val notificationIntent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0, notificationIntent, 0
+        )
+        val title =
+             "$minuteLeftInPhase minutes till " + (if (isBreakPhase) "break end" else "break")
+        val content = "Battery: $batteryPercent%\nLast Sync: $syncTime"
+
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle(title)
+            .setSmallIcon(R.drawable.foreground_icon)
+            .setContentText(content)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(content))
+            .setContentIntent(pendingIntent)
+            .build()
+    }
+
     private fun connectDevice(macAddr: String) {
         Log.d("ble", "trying to connect device $macAddr")
         bleDevice = rxBleClient.getBleDevice(macAddr)
@@ -181,9 +191,17 @@ class BleService : Service() {
             dev.establishConnection(false)
 //                .compose(ReplayingShare.instance())
                 .observeOn(AndroidSchedulers.mainThread())
-                .doFinally{connectDisposable = null}
-                .subscribe({Log.d("ble", "connection received")}, {Log.d("ble","connection failed")})
-                .let{connectDisposable = it}
+                .doFinally { connectDisposable = null }
+                .subscribe(
+                    {
+                        Log.d("ble", "connection received")
+                        val notification = buildNotification(true, 15, 20, "14:20")
+                        val mNotificationManager: NotificationManager =
+                            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+                        mNotificationManager.notify(NOTIFICATION_ID, notification)
+                    }, { Log.d("ble", "connection failed") })
+                .let { connectDisposable = it }
 //                .doFinally {
 //                    Log.d("ble", "doFinally called")
 //                    connectDisposable = null
