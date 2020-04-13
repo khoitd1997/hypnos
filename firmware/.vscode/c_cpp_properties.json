@@ -4,7 +4,7 @@
             "name": "Linux",
             "defines": [],
             "compilerPath": "/usr/bin/arm-none-eabi-gcc",
-            "compileCommands": "build/compile_commands.json",
+            "compileCommands": "build/pca10056/compile_commands.json",
             "cStandard": "c11",
             "cppStandard": "c++17"
         }
