@@ -24,7 +24,7 @@ if [ "$1" = "pca10059" ]; then
         fi
     done
 
-    [[ -z "$dev_file" ]] && echo "Can't find pca10059" && exit 1
+    [[ -z "$dev_file" ]] && echo "Can't find pca10059 device. Make sure to press reset before trying to flash" && exit 1
 
     rm -f dfu.zip
     nrfutil pkg generate --hw-version 52 --sd-req 0x00CA --debug-mode --application hypnos_pca10059.hex dfu.zip
