@@ -2,12 +2,12 @@
 
 NRF52840 power consumption data, measured using a trueRMS multimeter with supply voltage of 3V, assuming bonded device:
 
-| Type               | Adv Interval(ms) | Conn(ms) | mA |
-|--------------------|------------------|----------|----|
-| Fast               |                  |          |    |
-| Slow               |                  |          |    |
-| Directed           |                  |          |    |
-| Directed High Duty |                  |          |    |
+| Type               | Adv Interval(0.625 ms) | Conn(s) | mA |
+|--------------------|------------------------|---------|----|
+| Slow               |                        |         |    |
+| Fast               | 100                    | 2       |    |
+| Directed           |                        |         |    |
+| Directed High Duty |                        |         |    |
 
 ## References
 

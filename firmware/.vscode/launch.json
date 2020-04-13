@@ -7,7 +7,7 @@
         {
             "internalConsoleOptions": "openOnSessionStart",
             "cwd": "${workspaceRoot}",
-            "executable": "./build/hypnos.elf",
+            "executable": "./build/pca10056/hypnos_pca10056.elf",
             "name": "Debug NRF52840_XXAA",
             "request": "launch",
             "type": "cortex-debug",

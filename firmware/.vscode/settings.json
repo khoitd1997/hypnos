@@ -16,6 +16,7 @@
         "nrf_delay.h": "c",
         "nrf_drv_twi.h": "c",
         "app_util_platform.h": "c",
-        "sensorsim.h": "c"
+        "sensorsim.h": "c",
+        "ble_srv_common.h": "c"
     }
 }

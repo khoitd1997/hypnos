@@ -10,15 +10,15 @@ set(CMAKE_C_FLAGS
 set(CMAKE_CXX_FLAGS
     "${CMAKE_CXX_FLAGS} ${common_flags} -std=c++17 -fno-rtti -Wno-comment -Og -fno-exceptions"
 )
-set(CMAKE_EXE_LINKER_FLAGS
-    "${CMAKE_EXE_LINKER_FLAGS} -T${CMAKE_SOURCE_DIR}/gcc_nrf52.ld ")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_subdirectory(nrf_sdk)
 
 include_directories(SYSTEM ${NRF_INCS})
-include_directories(src)
 
-add_subdirectory(src)
-
-add_executable(${PROJECT_NAME}.elf ${NRF_SRCS} src/firmware_main.c)
-target_link_libraries(${PROJECT_NAME}.elf)
+add_executable(${PROJECT_NAME}_${BOARD_NAME}.elf ${NRF_SRCS}
+                                                 src/firmware_main.c)
+target_link_libraries(${PROJECT_NAME}_${BOARD_NAME}.elf)
+target_include_directories(${PROJECT_NAME}_${BOARD_NAME}.elf
+                           PUBLIC src/sdk_config/${BOARD_NAME})
+target_link_options(${PROJECT_NAME}_${BOARD_NAME}.elf PUBLIC
+                    -T${CMAKE_SOURCE_DIR}/gcc_${BOARD_NAME}.ld)
