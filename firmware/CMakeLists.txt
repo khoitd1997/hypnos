@@ -19,6 +19,6 @@ add_executable(${PROJECT_NAME}_${BOARD_NAME}.elf ${NRF_SRCS}
                                                  src/firmware_main.c)
 target_link_libraries(${PROJECT_NAME}_${BOARD_NAME}.elf)
 target_include_directories(${PROJECT_NAME}_${BOARD_NAME}.elf
-                           PUBLIC src/sdk_config/${BOARD_NAME})
+                           PUBLIC src/sdk_config src/sdk_config/${BOARD_NAME})
 target_link_options(${PROJECT_NAME}_${BOARD_NAME}.elf PUBLIC
                     -T${CMAKE_SOURCE_DIR}/gcc_${BOARD_NAME}.ld)
