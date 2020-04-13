@@ -127,7 +127,7 @@ class BleService : Service() {
 
         val broadcastIntent = Intent()
         broadcastIntent.action = "restartservice"
-        broadcastIntent.setClass(this, Restarter::class.java)
+        broadcastIntent.setClass(this, BleServiceStarter::class.java)
         this.sendBroadcast(broadcastIntent)
     }
 

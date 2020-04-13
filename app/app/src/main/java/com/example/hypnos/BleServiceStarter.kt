@@ -5,8 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
+import com.example.hypnos.BleService
 
-class Restarter : BroadcastReceiver() {
+class BleServiceStarter : BroadcastReceiver() {
     override fun onReceive(context: Context, arg1: Intent) {
         val intent = Intent(context, BleService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -14,6 +15,6 @@ class Restarter : BroadcastReceiver() {
         } else {
             context.startService(intent)
         }
-        Log.d("Restarter", "restarted service")
+        Log.d("BleServiceStarter", "Action: ${intent.action}")
     }
 }

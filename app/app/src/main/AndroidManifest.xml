@@ -25,14 +25,9 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".Autostart">
+        <receiver android:name=".BleServiceStarter">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
-
-        <receiver android:name="Restarter">
-            <intent-filter>
                 <action android:name="restartservice" />
             </intent-filter>
         </receiver>
