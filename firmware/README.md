@@ -1,13 +1,14 @@
 # Hypnos Firmware
 
-NRF52840 power consumption data, measured using a trueRMS multimeter with supply voltage of 3V, assuming bonded device:
+NRF52840 power consumption data, measured using a trueRMS multimeter with supply voltage of 3V, assuming bonded device. At the longest adv interval, the device is still detected and connected pretty fast, although to the time connect is inconsistent
 
-| Type               | Adv Interval(0.625 ms) | Conn(s) | mA |
-|--------------------|------------------------|---------|----|
-| Slow               |                        |         |    |
-| Fast               | 100                    | 2       |    |
-| Directed           |                        |         |    |
-| Directed High Duty |                        |         |    |
+| Type | Adv Interval(0.625 ms) | uA  |
+|------|------------------------|-----|
+| Slow | 50                     | 250 |
+| Slow | 1000                   | 70  |
+| Slow | 3000                   | 50  |
+| Slow | 5000                   | 30  |
+| Slow | 10000                  | 30  |
 
 ## References
 
