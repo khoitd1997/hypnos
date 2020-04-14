@@ -678,9 +678,8 @@ static void pm_evt_handler(pm_evt_t const *p_evt) {
 
     case PM_EVT_CONN_SEC_CONFIG_REQ:
       NRF_LOG_INFO("already bonded peer request bonding");
-      err_code = sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_AUTHENTICATION_FAILURE);
-      APP_ERROR_CHECK(err_code);
-      bond_delete(p_evt->conn_handle, NULL);
+      pm_conn_sec_config_t conn_sec_config = {.allow_repairing = true};
+      pm_conn_sec_config_reply(p_evt->conn_handle, &conn_sec_config);
       break;
 
     default:
