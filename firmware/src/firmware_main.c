@@ -660,12 +660,25 @@ static void bsp_event_handler(bsp_event_t event) {
  * @param[in] p_evt  Peer Manager event.
  */
 static void pm_evt_handler(pm_evt_t const *p_evt) {
+  ret_code_t err_code;
+
   pm_handler_on_pm_evt(p_evt);
   pm_handler_flash_clean(p_evt);
 
   switch (p_evt->evt_id) {
     case PM_EVT_PEERS_DELETE_SUCCEEDED:
       advertising_start(false);
+      break;
+
+    case PM_EVT_BONDED_PEER_CONNECTED:
+      NRF_LOG_INFO("bonded peer connected");
+      break;
+
+    case PM_EVT_CONN_SEC_CONFIG_REQ:
+      NRF_LOG_INFO("already bonded peer request bonding");
+      err_code = sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_AUTHENTICATION_FAILURE);
+      APP_ERROR_CHECK(err_code);
+      bond_delete(p_evt->conn_handle, NULL);
       break;
 
     default:
