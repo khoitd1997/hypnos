@@ -11,7 +11,9 @@ I used to have a script that runs every couple hours to turn the computer off to
 - Interact with device through phone app
     - Allow users' actions to be asynchronous, save and transmit their actions when the device is connected
     - Allow a limited number of exceptions through tokens per month: Allow users to select a time range that they don't want to be disturbed, the number of tokens needed are automatically calculated and applied
+        - Waving sleep time as well as applying many tokens in the same day should cost more to prevent binge
     - Customizable work and break duration(there has to be an upper and lower limit though)
+    - Limit amount of total screen time per day
     - Statistics for tracking progress
     - Foreground task to show device status as well as current phase
     - Synchronize with app to keep correct time, remind users to connect to device if they haven't for a long time
@@ -21,10 +23,8 @@ I used to have a script that runs every couple hours to turn the computer off to
 - Flexibly adapt to user' start of day
 - Hard to abuse or bypass but also possible to remove when truly necessary
 - Low power consumption
-    - Can we use advertisement to send data?
-    - Connect only when:
-      - User has pending actions like changing rest interval
-      - Need corrective actions such as clock syncing
+- User has pending actions like changing rest interval
+- Need corrective actions such as clock syncing
 - Reset switch for resetting all settings(including BLE bonding information)
 - Small size: About 1.5 x 1.5 inch
 
