@@ -98,10 +98,7 @@ namespace {
 
 namespace advertising {
   void init() {
-    ble_advertising_init_t init;
-
-    // TODO(khoi): Maybe stubstitute this for 0 initialization
-    memset(&init, 0, sizeof(init));
+    ble_advertising_init_t init{};
 
     init.advdata.name_type          = BLE_ADVDATA_FULL_NAME;
     init.advdata.include_appearance = true;
