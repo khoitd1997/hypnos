@@ -106,14 +106,14 @@
 #define MAX_CONN_PARAMS_UPDATE_COUNT \
   3  //!< Number of attempts before giving up the connection parameter negotiation.
 
-#define SEC_PARAM_BOND 1      //!< Perform bonding.
-#define SEC_PARAM_MITM 0      //!< Man In The Middle protection not required.
-#define SEC_PARAM_LESC 0      //!< LE Secure Connections not enabled.
-#define SEC_PARAM_KEYPRESS 0  //!< Keypress notifications not enabled.
-#define SEC_PARAM_IO_CAPABILITIES BLE_GAP_IO_CAPS_NONE  //!< No I/O capabilities.
-#define SEC_PARAM_OOB 0                                 //!< Out Of Band data not available.
-#define SEC_PARAM_MIN_KEY_SIZE 7                        //!< Minimum encryption key size.
-#define SEC_PARAM_MAX_KEY_SIZE 16                       //!< Maximum encryption key size.
+#define SEC_PARAM_BOND 0
+#define SEC_PARAM_MITM 1
+#define SEC_PARAM_LESC 0
+#define SEC_PARAM_KEYPRESS 0
+#define SEC_PARAM_IO_CAPABILITIES BLE_GAP_IO_CAPS_DISPLAY_ONLY
+#define SEC_PARAM_OOB 0            //!< Out Of Band data not available.
+#define SEC_PARAM_MIN_KEY_SIZE 7   //!< Minimum encryption key size.
+#define SEC_PARAM_MAX_KEY_SIZE 16  //!< Maximum encryption key size.
 
 #define APP_ADV_FAST_INTERVAL \
   100  //!< Fast advertising interval (in units of 0.625 ms. This value corresponds to 25 ms.).
@@ -140,6 +140,8 @@ static ble_uuid_t m_adv_uuids[] = {
 };  //!< Universally unique service identifiers.
 
 #undef USE_AUTHORIZATION_CODE
+
+// #define USE_AUTHORIZATION_CODE 1
 
 #ifdef USE_AUTHORIZATION_CODE
 static uint8_t m_auth_code[]   = {'A', 'B', 'C', 'D'};  // 0x41, 0x42, 0x43, 0x44
@@ -185,9 +187,9 @@ static void service_error_handler(uint32_t nrf_error) { APP_ERROR_HANDLER(nrf_er
  */
 static void ble_advertising_error_handler(uint32_t nrf_error) { APP_ERROR_HANDLER(nrf_error); }
 
-/**@brief Clear bond information from persistent storage.
+/**@brief Clear bond information from persistent storage. ONLY USE IT WHEN NOT CONNECTING
  */
-static void delete_bonds(void) {
+static void delete_bonds_unsafe(void) {
   ret_code_t err_code;
 
   NRF_LOG_INFO("Erase bonds!");
@@ -200,12 +202,12 @@ static void delete_bonds(void) {
  */
 static void advertising_start(bool erase_bonds) {
   if (erase_bonds == true) {
-    delete_bonds();
+    delete_bonds_unsafe();
     // Advertising is started by PM_EVT_PEERS_DELETE_SUCCEEDED event.
   } else {
     uint32_t ret;
 
-    ret = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
+    ret = ble_advertising_start(&m_advertising, BLE_ADV_MODE_SLOW);
     APP_ERROR_CHECK(ret);
   }
 }
@@ -251,6 +253,16 @@ static void gap_params_init(void) {
   gap_conn_params.conn_sup_timeout  = CONN_SUP_TIMEOUT;
 
   err_code = sd_ble_gap_ppcp_set(&gap_conn_params);
+  APP_ERROR_CHECK(err_code);
+
+  static ble_opt_t m_static_pin_option;
+
+  static uint8_t passkey[] = "123455";
+
+  m_static_pin_option.gap_opt.passkey.p_passkey = &passkey[0];
+
+  err_code = sd_ble_opt_set(BLE_GAP_OPT_PASSKEY, &m_static_pin_option);
+
   APP_ERROR_CHECK(err_code);
 }
 
@@ -406,13 +418,18 @@ static void services_init(void) {
   bms_init.bond_callbacks.delete_all                   = delete_all_bonds;
   bms_init.bond_callbacks.delete_all_except_requesting = delete_all_except_requesting_bond;
 
+  // gls_init.gl_meas_cccd_wr_sec = SEC_JUST_WORKS;
+  // gls_init.gl_feature_rd_sec   = SEC_JUST_WORKS;
+  // gls_init.racp_cccd_wr_sec    = SEC_JUST_WORKS;
+  // gls_init.racp_wr_sec         = SEC_JUST_WORKS;
+
   err_code = nrf_ble_bms_init(&m_bms, &bms_init);
   APP_ERROR_CHECK(err_code);
 
   // Initialize Device Information Service.
   memset(&dis_init, 0, sizeof(dis_init));
 
-  ble_srv_ascii_to_utf8(&dis_init.manufact_name_str, MANUFACTURER_NAME);
+  ble_srv_ascii_to_utf8(&dis_init.manufact_name_str, (char *)(MANUFACTURER_NAME));
 
   dis_init.dis_char_rd_sec = SEC_OPEN;
 
@@ -495,9 +512,27 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt) {
   ret_code_t err_code;
 
   switch (ble_adv_evt) {
+    case BLE_ADV_EVT_DIRECTED_HIGH_DUTY:
+      NRF_LOG_INFO("directed high duty");
+      err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
+      APP_ERROR_CHECK(err_code);
+      break;
+
+    case BLE_ADV_EVT_DIRECTED:
+      NRF_LOG_INFO("directed");
+      err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
+      APP_ERROR_CHECK(err_code);
+      break;
+
     case BLE_ADV_EVT_FAST:
       NRF_LOG_INFO("Fast adverstising.");
       err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
+      APP_ERROR_CHECK(err_code);
+      break;
+
+    case BLE_ADV_EVT_SLOW:
+      NRF_LOG_INFO("slow adverstising.");
+      err_code = bsp_indication_set(BSP_INDICATE_USER_STATE_2);
       APP_ERROR_CHECK(err_code);
       break;
 
@@ -541,8 +576,8 @@ static void ble_evt_handler(ble_evt_t const *p_ble_evt, void *p_context) {
     case BLE_GAP_EVT_PHY_UPDATE_REQUEST: {
       NRF_LOG_DEBUG("PHY update request.");
       ble_gap_phys_t const phys = {
-          .rx_phys = BLE_GAP_PHY_AUTO,
           .tx_phys = BLE_GAP_PHY_AUTO,
+          .rx_phys = BLE_GAP_PHY_AUTO,
       };
       err_code = sd_ble_gap_phy_update(p_ble_evt->evt.gap_evt.conn_handle, &phys);
       APP_ERROR_CHECK(err_code);
@@ -601,59 +636,15 @@ static void ble_stack_init(void) {
  */
 static void bsp_event_handler(bsp_event_t event) {
   ret_code_t err_code;
-
-  ble_adv_mode_t adv_mode = BLE_ADV_MODE_IDLE;
-
-  ble_adv_modes_config_t cfg;
-  memset(&cfg, 0, sizeof(cfg));
-
-  cfg.ble_adv_on_disconnect_disabled = true;
-  cfg.ble_adv_whitelist_enabled      = false;
-
-  cfg.ble_adv_primary_phy      = BLE_GAP_PHY_2MBPS;
-  cfg.ble_adv_extended_enabled = false;
-
   switch (event) {
-      // fast case
-    case BSP_EVENT_KEY_1:
-      adv_mode                  = BLE_ADV_MODE_FAST;
-      cfg.ble_adv_fast_enabled  = true;
-      cfg.ble_adv_fast_interval = APP_ADV_FAST_INTERVAL;
-      cfg.ble_adv_fast_timeout  = APP_ADV_DURATION;
-
-      break;
-
-    case BSP_EVENT_KEY_3:
-      adv_mode                               = BLE_ADV_MODE_DIRECTED_HIGH_DUTY;
-      cfg.ble_adv_directed_high_duty_enabled = true;
-
-      //   cfg.ble_adv_directed_enabled           = true;
-      //   cfg.ble_adv_directed_interval          = APP_ADV_FAST_INTERVAL;
-      //   cfg.ble_adv_directed_timeout = APP_ADV_DURATION;
-
-      //   cfg.ble_adv_slow_enabled  = false;
-      //   cfg.ble_adv_slow_interval = 0;
-      //   cfg.ble_adv_slow_timeout  = APP_ADV_DURATION;
-
-      ble_advertising_modes_config_set(&m_advertising, &cfg);
-      break;
-
-      // case BSP_EVENT_SLEEP:
-      //   sleep_mode_enter();
-      //   break;
-
     case BSP_EVENT_DISCONNECT:
       err_code = sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
       if (err_code != NRF_ERROR_INVALID_STATE) { APP_ERROR_CHECK(err_code); }
-      return;
-      //   break;
+      break;
 
     default:
-      return;
+      break;
   }
-
-  err_code = ble_advertising_start(&m_advertising, adv_mode);
-  APP_ERROR_CHECK(err_code);
 }
 #endif
 
@@ -662,12 +653,36 @@ static void bsp_event_handler(bsp_event_t event) {
  * @param[in] p_evt  Peer Manager event.
  */
 static void pm_evt_handler(pm_evt_t const *p_evt) {
-  ret_code_t err_code;
-
   pm_handler_on_pm_evt(p_evt);
+  pm_handler_disconnect_on_sec_failure(p_evt);
   pm_handler_flash_clean(p_evt);
 
   switch (p_evt->evt_id) {
+    case PM_EVT_CONN_SEC_SUCCEEDED: {
+      pm_conn_sec_status_t conn_sec_status;
+
+      // Check if the link is authenticated (meaning at least MITM).
+      auto err_code = pm_conn_sec_status_get(p_evt->conn_handle, &conn_sec_status);
+      APP_ERROR_CHECK(err_code);
+
+      if (conn_sec_status.mitm_protected) {
+        NRF_LOG_INFO("Link secured. Role: %d. conn_handle: %d, Procedure: %d",
+                     ble_conn_state_role(p_evt->conn_handle),
+                     p_evt->conn_handle,
+                     p_evt->params.conn_sec_succeeded.procedure);
+      } else {
+        // The peer did not use MITM, disconnect.
+        NRF_LOG_INFO("Collector did not use MITM, disconnecting");
+        bond_delete(m_conn_handle, NULL);
+        err_code = sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
+        APP_ERROR_CHECK(err_code);
+      }
+    } break;
+
+    case PM_EVT_CONN_SEC_FAILED:
+      m_conn_handle = BLE_CONN_HANDLE_INVALID;
+      break;
+
     case PM_EVT_PEERS_DELETE_SUCCEEDED:
       advertising_start(false);
       break;
@@ -676,11 +691,11 @@ static void pm_evt_handler(pm_evt_t const *p_evt) {
       NRF_LOG_INFO("bonded peer connected");
       break;
 
-    case PM_EVT_CONN_SEC_CONFIG_REQ:
+    case PM_EVT_CONN_SEC_CONFIG_REQ: {
       NRF_LOG_INFO("already bonded peer request bonding");
       pm_conn_sec_config_t conn_sec_config = {.allow_repairing = true};
       pm_conn_sec_config_reply(p_evt->conn_handle, &conn_sec_config);
-      break;
+    } break;
 
     default:
       break;
@@ -699,55 +714,25 @@ static void peer_manager_init(void) {
   memset(&sec_param, 0, sizeof(ble_gap_sec_params_t));
 
   // Security parameters to be used for all security procedures.
-  sec_param.bond           = SEC_PARAM_BOND;
-  sec_param.mitm           = SEC_PARAM_MITM;
-  sec_param.lesc           = SEC_PARAM_LESC;
-  sec_param.keypress       = SEC_PARAM_KEYPRESS;
-  sec_param.io_caps        = SEC_PARAM_IO_CAPABILITIES;
-  sec_param.oob            = SEC_PARAM_OOB;
-  sec_param.min_key_size   = SEC_PARAM_MIN_KEY_SIZE;
-  sec_param.max_key_size   = SEC_PARAM_MAX_KEY_SIZE;
-  sec_param.kdist_own.enc  = 1;
-  sec_param.kdist_own.id   = 1;
-  sec_param.kdist_peer.enc = 1;
-  sec_param.kdist_peer.id  = 1;
+  sec_param.bond         = SEC_PARAM_BOND;
+  sec_param.mitm         = SEC_PARAM_MITM;
+  sec_param.lesc         = SEC_PARAM_LESC;
+  sec_param.keypress     = SEC_PARAM_KEYPRESS;
+  sec_param.io_caps      = SEC_PARAM_IO_CAPABILITIES;
+  sec_param.oob          = SEC_PARAM_OOB;
+  sec_param.min_key_size = SEC_PARAM_MIN_KEY_SIZE;
+  sec_param.max_key_size = SEC_PARAM_MAX_KEY_SIZE;
+
+  //   sec_param.kdist_own.enc  = 1;
+  //   sec_param.kdist_own.id   = 1;
+  //   sec_param.kdist_peer.enc = 1;
+  //   sec_param.kdist_peer.id  = 1;
 
   err_code = pm_sec_params_set(&sec_param);
   APP_ERROR_CHECK(err_code);
 
   err_code = pm_register(pm_evt_handler);
   APP_ERROR_CHECK(err_code);
-}
-
-/**@brief Function for initializing the Advertising functionality.
- */
-static void advertising_init(void) {
-  ret_code_t             err_code;
-  uint8_t                adv_flags;
-  ble_advertising_init_t init;
-
-  memset(&init, 0, sizeof(init));
-
-  adv_flags                            = BLE_GAP_ADV_FLAGS_LE_ONLY_LIMITED_DISC_MODE;
-  init.advdata.name_type               = BLE_ADVDATA_FULL_NAME;
-  init.advdata.include_appearance      = true;
-  init.advdata.flags                   = adv_flags;
-  init.advdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
-  init.advdata.uuids_complete.p_uuids  = m_adv_uuids;
-
-  init.config.ble_adv_whitelist_enabled = false;
-  init.config.ble_adv_fast_enabled      = true;
-  init.config.ble_adv_fast_interval     = APP_ADV_FAST_INTERVAL;
-  init.config.ble_adv_fast_timeout      = APP_ADV_DURATION;
-  init.config.ble_adv_slow_enabled      = false;
-
-  init.evt_handler   = on_adv_evt;
-  init.error_handler = ble_advertising_error_handler;
-
-  err_code = ble_advertising_init(&m_advertising, &init);
-  APP_ERROR_CHECK(err_code);
-
-  ble_advertising_conn_cfg_tag_set(&m_advertising, APP_BLE_CONN_CFG_TAG);
 }
 
 /**@brief Function for initializing buttons and leds.
@@ -795,6 +780,11 @@ static void idle_state_handle(void) {
   if (NRF_LOG_PROCESS() == false) { nrf_pwr_mgmt_run(); }
 }
 
+// TODO(khoi): Remove this after development is done
+#pragma GCC diagnostic ignored "-Wunused-function"
+
+static void reset() { delete_bonds_unsafe(); }
+
 /**@brief Function for application main entry.
  */
 int main(void) {
@@ -806,7 +796,41 @@ int main(void) {
   ble_stack_init();
   gap_params_init();
   gatt_init();
-  advertising_init();
+
+  ret_code_t             err_code;
+  uint8_t                adv_flags;
+  ble_advertising_init_t init;
+
+  memset(&init, 0, sizeof(init));
+
+  adv_flags                            = BLE_GAP_ADV_FLAGS_LE_ONLY_LIMITED_DISC_MODE;
+  init.advdata.name_type               = BLE_ADVDATA_FULL_NAME;
+  init.advdata.include_appearance      = true;
+  init.advdata.flags                   = adv_flags;
+  init.advdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
+  init.advdata.uuids_complete.p_uuids  = m_adv_uuids;
+
+  //   init.config.ble_adv_on_disconnect_disabled = true;
+  init.config.ble_adv_whitelist_enabled = false;
+
+  //   ble_adv_mode_t adv_mode           = BLE_ADV_MODE_FAST;
+  init.config.ble_adv_fast_enabled  = true;
+  init.config.ble_adv_fast_interval = APP_ADV_FAST_INTERVAL;
+  init.config.ble_adv_fast_timeout  = APP_ADV_DURATION;
+
+  ble_adv_mode_t adv_mode           = BLE_ADV_MODE_SLOW;
+  init.config.ble_adv_slow_enabled  = true;
+  init.config.ble_adv_slow_interval = 10000;
+  init.config.ble_adv_slow_timeout  = APP_ADV_DURATION;
+
+  init.evt_handler   = on_adv_evt;
+  init.error_handler = ble_advertising_error_handler;
+
+  err_code = ble_advertising_init(&m_advertising, &init);
+  APP_ERROR_CHECK(err_code);
+
+  ble_advertising_conn_cfg_tag_set(&m_advertising, APP_BLE_CONN_CFG_TAG);
+
   services_init();
   conn_params_init();
   peer_manager_init();
@@ -814,9 +838,14 @@ int main(void) {
   // Start execution.
   NRF_LOG_INFO("Bond Management example started.");
 
-#ifdef BOARD_PCA10059
-  advertising_start(false);
-#endif
+  // #ifdef BOARD_PCA10059
+  uint32_t ret;
+
+  //   delete_bonds_unsafe();
+
+  ret = ble_advertising_start(&m_advertising, adv_mode);
+  APP_ERROR_CHECK(ret);
+  // #endif
 
   // Enter main loop.
   for (;;) { idle_state_handle(); }
