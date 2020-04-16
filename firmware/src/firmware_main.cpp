@@ -53,13 +53,11 @@
 #include "app_error.h"
 #include "app_timer.h"
 #include "ble.h"
-#include "ble_advdata.h"
-#include "ble_advertising.h"
+
 #include "ble_conn_params.h"
 #include "ble_conn_state.h"
 #include "ble_dis.h"
 #include "ble_hci.h"
-#include "ble_srv_common.h"
 #include "bsp_btn_ble.h"
 #include "fds.h"
 #include "nordic_common.h"
@@ -77,13 +75,14 @@
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
+#include "advertising_module.hpp"
+
 #define DEVICE_NAME "Hypnos"  //!< Name of device. Will be included in the advertising data.
 #define MANUFACTURER_NAME \
   "KhoiTrinh"  //!< Manufacturer. Will be passed to Device Information Service.
 
 #define APP_BLE_OBSERVER_PRIO \
   3  //!< Application's BLE observer priority. You shouldn't need to modify this value.
-#define APP_BLE_CONN_CFG_TAG 1  //!< A tag identifying the SoftDevice BLE configuration.
 
 #define SECOND_10_MS_UNITS 100  //!< Definition of 1 second, when 1 unit is 10 ms.
 #define MIN_CONN_INTERVAL \
@@ -115,29 +114,19 @@
 #define SEC_PARAM_MIN_KEY_SIZE 7   //!< Minimum encryption key size.
 #define SEC_PARAM_MAX_KEY_SIZE 16  //!< Maximum encryption key size.
 
-#define APP_ADV_FAST_INTERVAL \
-  100  //!< Fast advertising interval (in units of 0.625 ms. This value corresponds to 25 ms.).
-#define APP_ADV_DURATION \
-  18000  //!< The advertising duration (180 seconds) in units of 10 milliseconds.
-
 #define MEM_BUFF_SIZE 512
 #define DEAD_BEEF \
   0xDEADBEEF  //!< Value used as error code on stack dump, can be used to identify stack location on
               //!< stack unwind.
 
-NRF_BLE_QWR_DEF(m_qwr);              //!< Context for the Queued Write module.
-NRF_BLE_BMS_DEF(m_bms);              //!< Structure used to identify the Bond Management service.
-NRF_BLE_GATT_DEF(m_gatt);            //!< GATT module instance.
-BLE_ADVERTISING_DEF(m_advertising);  //!< Advertising module instance.
+NRF_BLE_QWR_DEF(m_qwr);    //!< Context for the Queued Write module.
+NRF_BLE_BMS_DEF(m_bms);    //!< Structure used to identify the Bond Management service.
+NRF_BLE_GATT_DEF(m_gatt);  //!< GATT module instance.
 
 static uint16_t m_conn_handle = BLE_CONN_HANDLE_INVALID;  //!< Handle of the current connection.
 static uint8_t  m_qwr_mem[MEM_BUFF_SIZE];  //!< Write buffer for the Queued Write module.
 static ble_conn_state_user_flag_id_t
     m_bms_bonds_to_delete;  //!< Flags used to identify bonds that should be deleted.
-
-static ble_uuid_t m_adv_uuids[] = {
-    {BLE_UUID_BMS_SERVICE, BLE_UUID_TYPE_BLE},
-};  //!< Universally unique service identifiers.
 
 #undef USE_AUTHORIZATION_CODE
 
@@ -180,37 +169,6 @@ static void nrf_qwr_error_handler(uint32_t nrf_error) { APP_ERROR_HANDLER(nrf_er
  * @param[in]   nrf_error   Error code containing information about what went wrong.
  */
 static void service_error_handler(uint32_t nrf_error) { APP_ERROR_HANDLER(nrf_error); }
-
-/**@brief Function for handling advertising errors.
- *
- * @param[in] nrf_error  Error code containing information about what went wrong.
- */
-static void ble_advertising_error_handler(uint32_t nrf_error) { APP_ERROR_HANDLER(nrf_error); }
-
-/**@brief Clear bond information from persistent storage. ONLY USE IT WHEN NOT CONNECTING
- */
-static void delete_bonds_unsafe(void) {
-  ret_code_t err_code;
-
-  NRF_LOG_INFO("Erase bonds!");
-
-  err_code = pm_peers_delete();
-  APP_ERROR_CHECK(err_code);
-}
-
-/**@brief Function for starting advertising.
- */
-static void advertising_start(bool erase_bonds) {
-  if (erase_bonds == true) {
-    delete_bonds_unsafe();
-    // Advertising is started by PM_EVT_PEERS_DELETE_SUCCEEDED event.
-  } else {
-    uint32_t ret;
-
-    ret = ble_advertising_start(&m_advertising, BLE_ADV_MODE_SLOW);
-    APP_ERROR_CHECK(ret);
-  }
-}
 
 /**@brief Function for the Timer initialization.
  *
@@ -483,67 +441,6 @@ static void conn_params_init(void) {
   APP_ERROR_CHECK(err_code);
 }
 
-/**@brief Function for putting the chip into sleep mode.
- *
- * @note This function will not return.
- */
-static void sleep_mode_enter(void) {
-  ret_code_t err_code;
-
-  err_code = bsp_indication_set(BSP_INDICATE_IDLE);
-  APP_ERROR_CHECK(err_code);
-
-  // Prepare wakeup buttons.
-  err_code = bsp_btn_ble_sleep_mode_prepare();
-  APP_ERROR_CHECK(err_code);
-
-  // Go to system-off mode (this function will not return; wakeup will cause a reset).
-  err_code = sd_power_system_off();
-  APP_ERROR_CHECK(err_code);
-}
-
-/**@brief Function for handling advertising events.
- *
- * @details This function will be called for advertising events which are passed to the application.
- *
- * @param[in] ble_adv_evt  Advertising event.
- */
-static void on_adv_evt(ble_adv_evt_t ble_adv_evt) {
-  ret_code_t err_code;
-
-  switch (ble_adv_evt) {
-    case BLE_ADV_EVT_DIRECTED_HIGH_DUTY:
-      NRF_LOG_INFO("directed high duty");
-      err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
-      APP_ERROR_CHECK(err_code);
-      break;
-
-    case BLE_ADV_EVT_DIRECTED:
-      NRF_LOG_INFO("directed");
-      err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
-      APP_ERROR_CHECK(err_code);
-      break;
-
-    case BLE_ADV_EVT_FAST:
-      NRF_LOG_INFO("Fast adverstising.");
-      err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
-      APP_ERROR_CHECK(err_code);
-      break;
-
-    case BLE_ADV_EVT_SLOW:
-      NRF_LOG_INFO("slow adverstising.");
-      err_code = bsp_indication_set(BSP_INDICATE_USER_STATE_2);
-      APP_ERROR_CHECK(err_code);
-      break;
-
-    case BLE_ADV_EVT_IDLE:
-      sleep_mode_enter();
-      break;
-    default:
-      break;
-  }
-}
-
 /**@brief Function for handling BLE events.
  *
  * @param[in]   p_ble_evt   Bluetooth stack event.
@@ -618,7 +515,7 @@ static void ble_stack_init(void) {
   // Configure the BLE stack using the default settings.
   // Fetch the start address of the application RAM.
   uint32_t ram_start = 0;
-  err_code           = nrf_sdh_ble_default_cfg_set(APP_BLE_CONN_CFG_TAG, &ram_start);
+  err_code           = nrf_sdh_ble_default_cfg_set(advertising::CONN_CFG_TAG, &ram_start);
   APP_ERROR_CHECK(err_code);
 
   // Enable BLE stack.
@@ -684,7 +581,7 @@ static void pm_evt_handler(pm_evt_t const *p_evt) {
       break;
 
     case PM_EVT_PEERS_DELETE_SUCCEEDED:
-      advertising_start(false);
+      advertising::start();
       break;
 
     case PM_EVT_BONDED_PEER_CONNECTED:
@@ -781,9 +678,9 @@ static void idle_state_handle(void) {
 }
 
 // TODO(khoi): Remove this after development is done
-#pragma GCC diagnostic ignored "-Wunused-function"
+// #pragma GCC diagnostic ignored "-Wunused-function"
 
-static void reset() { delete_bonds_unsafe(); }
+// static void reset() { delete_bonds_unsafe(); }
 
 /**@brief Function for application main entry.
  */
@@ -796,41 +693,7 @@ int main(void) {
   ble_stack_init();
   gap_params_init();
   gatt_init();
-
-  ret_code_t             err_code;
-  uint8_t                adv_flags;
-  ble_advertising_init_t init;
-
-  memset(&init, 0, sizeof(init));
-
-  adv_flags                            = BLE_GAP_ADV_FLAGS_LE_ONLY_LIMITED_DISC_MODE;
-  init.advdata.name_type               = BLE_ADVDATA_FULL_NAME;
-  init.advdata.include_appearance      = true;
-  init.advdata.flags                   = adv_flags;
-  init.advdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
-  init.advdata.uuids_complete.p_uuids  = m_adv_uuids;
-
-  //   init.config.ble_adv_on_disconnect_disabled = true;
-  init.config.ble_adv_whitelist_enabled = false;
-
-  //   ble_adv_mode_t adv_mode           = BLE_ADV_MODE_FAST;
-  init.config.ble_adv_fast_enabled  = true;
-  init.config.ble_adv_fast_interval = APP_ADV_FAST_INTERVAL;
-  init.config.ble_adv_fast_timeout  = APP_ADV_DURATION;
-
-  ble_adv_mode_t adv_mode           = BLE_ADV_MODE_SLOW;
-  init.config.ble_adv_slow_enabled  = true;
-  init.config.ble_adv_slow_interval = 10000;
-  init.config.ble_adv_slow_timeout  = APP_ADV_DURATION;
-
-  init.evt_handler   = on_adv_evt;
-  init.error_handler = ble_advertising_error_handler;
-
-  err_code = ble_advertising_init(&m_advertising, &init);
-  APP_ERROR_CHECK(err_code);
-
-  ble_advertising_conn_cfg_tag_set(&m_advertising, APP_BLE_CONN_CFG_TAG);
-
+  advertising::init();
   services_init();
   conn_params_init();
   peer_manager_init();
@@ -838,14 +701,7 @@ int main(void) {
   // Start execution.
   NRF_LOG_INFO("Bond Management example started.");
 
-  // #ifdef BOARD_PCA10059
-  uint32_t ret;
-
-  //   delete_bonds_unsafe();
-
-  ret = ble_advertising_start(&m_advertising, adv_mode);
-  APP_ERROR_CHECK(ret);
-  // #endif
+  advertising::start();
 
   // Enter main loop.
   for (;;) { idle_state_handle(); }
