@@ -49,7 +49,6 @@
 #include "nordic_common.h"
 #include "nrf.h"
 
-#include "nrf_ble_gatt.h"
 #include "nrf_sdh.h"
 #include "nrf_sdh_ble.h"
 #include "nrf_sdh_soc.h"
@@ -64,6 +63,8 @@
 
 #include "connection_module.hpp"
 
+#include "gatt_module.hpp"
+
 #include "gap_module.hpp"
 
 #include "peer_manager_handler.h"
@@ -73,8 +74,6 @@
 #include "qwr_module.hpp"
 
 #include "power_module.hpp"
-
-NRF_BLE_GATT_DEF(m_gatt);
 
 /**@brief Callback function for asserts in the SoftDevice.
  *
@@ -135,11 +134,6 @@ static void log_init(void) {
   NRF_LOG_DEFAULT_BACKENDS_INIT();
 }
 
-static void gatt_init(void) {
-  ret_code_t err_code = nrf_ble_gatt_init(&m_gatt, NULL);
-  APP_ERROR_CHECK(err_code);
-}
-
 // TODO(khoi): Remove this after development is done
 // #pragma GCC diagnostic ignored "-Wunused-function"
 
@@ -158,7 +152,7 @@ int main(void) {
 
   ble::init();
   ble::gap::init();
-  gatt_init();
+  ble::gatt::init();
   ble::advertising::init();
 
   ble::qwr::init();

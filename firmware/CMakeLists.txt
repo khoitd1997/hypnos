@@ -26,6 +26,7 @@ add_executable(
   src/ble/pm_module.cpp
   src/ble/connection_module.cpp
   src/ble/gap_module.cpp
+  src/ble/gatt_module.cpp
   src/ble/ble_module.cpp)
 target_link_libraries(${PROJECT_NAME}_${BOARD_NAME}.elf)
 target_include_directories(
