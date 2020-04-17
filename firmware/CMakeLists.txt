@@ -24,7 +24,8 @@ add_executable(
   src/qwr_module.cpp
   src/pm_module.cpp
   src/power_module.cpp
-  src/connection_module.cpp)
+  src/connection_module.cpp
+  src/ble_module.cpp)
 target_link_libraries(${PROJECT_NAME}_${BOARD_NAME}.elf)
 target_include_directories(
   ${PROJECT_NAME}_${BOARD_NAME}.elf PUBLIC src/sdk_config
