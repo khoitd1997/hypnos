@@ -14,14 +14,14 @@
 #include "connection_module.hpp"
 
 namespace {
-#define SEC_PARAM_BOND 0
-#define SEC_PARAM_MITM 1
-#define SEC_PARAM_LESC 0
-#define SEC_PARAM_KEYPRESS 0
-#define SEC_PARAM_IO_CAPABILITIES BLE_GAP_IO_CAPS_DISPLAY_ONLY
-#define SEC_PARAM_OOB 0            //!< Out Of Band data not available.
-#define SEC_PARAM_MIN_KEY_SIZE 7   //!< Minimum encryption key size.
-#define SEC_PARAM_MAX_KEY_SIZE 16  //!< Maximum encryption key size.
+  constexpr uint8_t SEC_PARAM_BOND            = 0;
+  constexpr uint8_t SEC_PARAM_MITM            = 1;
+  constexpr uint8_t SEC_PARAM_LESC            = 0;
+  constexpr uint8_t SEC_PARAM_KEYPRESS        = 0;
+  constexpr uint8_t SEC_PARAM_IO_CAPABILITIES = BLE_GAP_IO_CAPS_DISPLAY_ONLY;
+  constexpr uint8_t SEC_PARAM_OOB             = 0;   //!< Out Of Band data not available
+  constexpr uint8_t SEC_PARAM_MIN_KEY_SIZE    = 7;   //!< Minimum encryption key size
+  constexpr uint8_t SEC_PARAM_MAX_KEY_SIZE    = 16;  //!< Maximum encryption key size
 
   ble_conn_state_user_flag_id_t m_bonds_to_delete_flag;
 
