@@ -33,9 +33,9 @@ class HomeFragment : Fragment() {
         }
 
     override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View? {
         super.onCreateView(inflater, container, savedInstanceState)
 
@@ -60,9 +60,11 @@ class HomeFragment : Fragment() {
                 sendMsg(BleService.Companion.BleIpcCmd.START_SCAN, null)
             }
             disconnect_button.setOnClickListener {
+                Log.d("view", "disconnect button clicked")
                 sendMsg(
                     BleService.Companion.BleIpcCmd.DISCONNECT_DEVICE,
-                    BleService.Companion.DisconnectInfo(true)
+//                    BleService.Companion.DisconnectInfo(true)
+                    BleService.Companion.DisconnectInfo(false)
                 )
             }
         }
@@ -96,7 +98,7 @@ class HomeFragment : Fragment() {
                 BleService.Companion.BleIpcCmd.INIT,
                 BleService.Companion.InitInfo(resultsAdapter)
             )
-            Log.d("Service","Service connected")
+            Log.d("Service", "Service connected")
         }
 
         override fun onServiceDisconnected(className: ComponentName) {
