@@ -1,0 +1,42 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build and flash pca10056",
+            "type": "shell",
+            "command": "${workspaceFolder}/build_program.sh pca10056 && ${workspaceFolder}/flash_program.sh pca10056",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "build and flash pca10059",
+            "type": "shell",
+            "command": "${workspaceFolder}/build_program.sh pca10059 && ${workspaceFolder}/flash_program.sh pca10059",
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "flash softdevice",
+            "type": "shell",
+            "command": "${workspaceFolder}/flash_softdevice.sh",
+            "problemMatcher": []
+        },
+        {
+            "label": "erase all",
+            "type": "shell",
+            "command": "nrfjprog -f nrf52 --eraseall",
+            "problemMatcher": []
+        },
+        {
+            "label": "configure cmsis",
+            "type": "shell",
+            "command": "java -jar ${workspaceFolder}/nrf_sdk/sdk/external_tools/cmsisconfig/CMSIS_Configuration_Wizard.jar ${workspaceFolder}/src/sdk_config.h",
+            "problemMatcher": []
+        }
+    ]
+}

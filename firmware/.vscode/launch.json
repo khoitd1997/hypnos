@@ -1,0 +1,19 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "internalConsoleOptions": "openOnSessionStart",
+            "cwd": "${workspaceRoot}",
+            "executable": "./build/pca10056/hypnos_pca10056.elf",
+            "name": "Debug NRF52840_XXAA",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "jlink",
+            "device": "NRF52840_XXAA",
+            "preLaunchTask": "build and flash"
+        }
+    ]
+}
