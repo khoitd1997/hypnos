@@ -46,7 +46,6 @@
 
 #include "ble_conn_params.h"
 #include "ble_conn_state.h"
-#include "ble_dis.h"
 #include "ble_hci.h"
 #include "bsp_btn_ble.h"
 #include "fds.h"
