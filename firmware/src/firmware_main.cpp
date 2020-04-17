@@ -39,7 +39,6 @@
  */
 
 #include <stdint.h>
-#include <string.h>
 #include "app_error.h"
 #include "app_timer.h"
 #include "ble.h"
@@ -65,6 +64,8 @@
 
 #include "connection_module.hpp"
 
+#include "gap_module.hpp"
+
 #include "peer_manager_handler.h"
 #include "pm_module.hpp"
 
@@ -73,27 +74,7 @@
 
 #include "power_module.hpp"
 
-#define DEVICE_NAME "Hypnos"  //!< Name of device. Will be included in the advertising data.
-#define MANUFACTURER_NAME \
-  "KhoiTrinh"  //!< Manufacturer. Will be passed to Device Information Service.
-
-#define SECOND_10_MS_UNITS 100  //!< Definition of 1 second, when 1 unit is 10 ms.
-#define MIN_CONN_INTERVAL \
-  7  //!< Minimum acceptable connection interval (0.25 seconds), Connection interval uses 1.25 ms
-     //!< units.
-#define MAX_CONN_INTERVAL \
-  400  //!< Maximum acceptable connection interval (0.5 second), Connection interval uses 1.25 ms
-       //!< units.
-#define SLAVE_LATENCY 0  //!< Slave latency.
-#define CONN_SUP_TIMEOUT \
-  (4 * SECOND_10_MS_UNITS)  //!< Connection supervisory timeout (4 seconds), Supervision Timeout
-                            //!< uses 10 ms units.
-
-#define DEAD_BEEF \
-  0xDEADBEEF  //!< Value used as error code on stack dump, can be used to identify stack location on
-              //!< stack unwind.
-
-NRF_BLE_GATT_DEF(m_gatt);  //!< GATT module instance.
+NRF_BLE_GATT_DEF(m_gatt);
 
 /**@brief Callback function for asserts in the SoftDevice.
  *
@@ -107,7 +88,9 @@ NRF_BLE_GATT_DEF(m_gatt);  //!< GATT module instance.
  * @param[in]   file_name  File name of the failing ASSERT call.
  */
 void assert_nrf_callback(uint16_t line_num, const uint8_t *p_file_name) {
-  app_error_handler(DEAD_BEEF, line_num, p_file_name);
+  //!< Value used as error code on stack dump, can be used to identify stack location on
+  //!< stack unwind.
+  app_error_handler(0xDEADBEEF, line_num, p_file_name);
 }
 
 static void timers_init(void) {
@@ -120,13 +103,13 @@ static void timers_init(void) {
 
 #ifdef BOARD_PCA10056
 static void buttons_leds_event_handler(bsp_event_t event) {
-  ret_code_t err_code;
+  //   ret_code_t err_code;
   switch (event) {
-    case BSP_EVENT_DISCONNECT:
-      err_code = sd_ble_gap_disconnect(ble::connection::get_handle(),
-                                       BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
-      if (err_code != NRF_ERROR_INVALID_STATE) { APP_ERROR_CHECK(err_code); }
-      break;
+      // case BSP_EVENT_DISCONNECT:
+      //   err_code = sd_ble_gap_disconnect(ble::connection::get_handle(),
+      //                                    BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
+      //   if (err_code != NRF_ERROR_INVALID_STATE) { APP_ERROR_CHECK(err_code); }
+      //   break;
 
     default:
       break;
@@ -152,43 +135,6 @@ static void log_init(void) {
   NRF_LOG_DEFAULT_BACKENDS_INIT();
 }
 
-static void gap_params_init(void) {
-  ret_code_t              err_code;
-  ble_gap_conn_params_t   gap_conn_params;
-  ble_gap_conn_sec_mode_t sec_mode;
-
-  sec_mode.sm = 1;
-  sec_mode.lv = 3;
-  BLE_GAP_CONN_SEC_MODE_SET_OPEN(&sec_mode);
-
-  err_code =
-      sd_ble_gap_device_name_set(&sec_mode, (const uint8_t *)DEVICE_NAME, strlen(DEVICE_NAME));
-  APP_ERROR_CHECK(err_code);
-
-  err_code = sd_ble_gap_appearance_set(BLE_APPEARANCE_UNKNOWN);
-  APP_ERROR_CHECK(err_code);
-
-  memset(&gap_conn_params, 0, sizeof(gap_conn_params));
-
-  gap_conn_params.min_conn_interval = MIN_CONN_INTERVAL;
-  gap_conn_params.max_conn_interval = MAX_CONN_INTERVAL;
-  gap_conn_params.slave_latency     = SLAVE_LATENCY;
-  gap_conn_params.conn_sup_timeout  = CONN_SUP_TIMEOUT;
-
-  err_code = sd_ble_gap_ppcp_set(&gap_conn_params);
-  APP_ERROR_CHECK(err_code);
-
-  static ble_opt_t m_static_pin_option;
-
-  static uint8_t passkey[] = "123455";
-
-  m_static_pin_option.gap_opt.passkey.p_passkey = &passkey[0];
-
-  err_code = sd_ble_opt_set(BLE_GAP_OPT_PASSKEY, &m_static_pin_option);
-
-  APP_ERROR_CHECK(err_code);
-}
-
 static void gatt_init(void) {
   ret_code_t err_code = nrf_ble_gatt_init(&m_gatt, NULL);
   APP_ERROR_CHECK(err_code);
@@ -211,7 +157,7 @@ int main(void) {
   power::init();
 
   ble::init();
-  gap_params_init();
+  ble::gap::init();
   gatt_init();
   ble::advertising::init();
 
