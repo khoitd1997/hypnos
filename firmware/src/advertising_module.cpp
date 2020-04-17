@@ -56,7 +56,7 @@ namespace {
     APP_ERROR_CHECK(err_code);
   }
 
-  void on_advertising_event(ble_adv_evt_t ble_adv_evt) {
+  void advertising_event_handler(ble_adv_evt_t ble_adv_evt) {
     ret_code_t err_code;
 
     switch (ble_adv_evt) {
@@ -120,7 +120,7 @@ namespace advertising {
     init.config.ble_adv_slow_interval = ADVERTISING_SLOW_INTERVAL;
     init.config.ble_adv_slow_timeout  = ADVERTISING_DURATION;
 
-    init.evt_handler   = on_advertising_event;
+    init.evt_handler   = advertising_event_handler;
     init.error_handler = advertising_error_handler;
 
     auto err_code = ble_advertising_init(&m_advertising, &init);
