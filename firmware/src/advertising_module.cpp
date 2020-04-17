@@ -11,7 +11,7 @@
 
 #include "nrf_log.h"
 
-#include "peer_manager.h"
+#include "pm_module.hpp"
 
 #include "nrf_sdh_ble.h"
 
@@ -43,16 +43,6 @@ namespace {
 
     // Go to system-off mode (this function will not return; wakeup will cause a reset).
     err_code = sd_power_system_off();
-    APP_ERROR_CHECK(err_code);
-  }
-
-  // TODO(khoi): Move this somewhere else
-  void delete_bonds_unsafe() {
-    ret_code_t err_code;
-
-    NRF_LOG_INFO("Erase bonds!");
-
-    err_code = pm_peers_delete();
     APP_ERROR_CHECK(err_code);
   }
 
@@ -131,7 +121,7 @@ namespace advertising {
 
   void start(const bool delete_bonds) {
     if (delete_bonds) {
-      delete_bonds_unsafe();
+      pm::delete_all_bonds_unsafe();
       // Advertising is started by PM_EVT_PEERS_DELETE_SUCCEEDED event.
     } else {
       auto ret = ble_advertising_start(&m_advertising, ADVERTISING_MODE);

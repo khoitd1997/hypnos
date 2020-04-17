@@ -393,7 +393,7 @@ static void idle_state_handle(void) {
 // TODO(khoi): Remove this after development is done
 // #pragma GCC diagnostic ignored "-Wunused-function"
 
-// static void reset() { delete_bonds_unsafe(); }
+// static void reset() { pm::delete_all_bonds_unsafe(); }
 
 /**@brief Function for application main entry.
  */

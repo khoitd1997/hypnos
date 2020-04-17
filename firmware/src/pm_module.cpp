@@ -167,4 +167,11 @@ namespace pm {
       peer_id = pm_next_peer_id_get(peer_id);
     }
   }
+
+  void delete_all_bonds_unsafe() {
+    NRF_LOG_INFO("Erasing all bonds!");
+
+    const auto err_code = pm_peers_delete();
+    APP_ERROR_CHECK(err_code);
+  }
 }  // namespace pm
