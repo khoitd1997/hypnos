@@ -189,27 +189,13 @@ static void gatt_init(void) {
  */
 
 static void services_init(void) {
-  ret_code_t     err_code;
-  ble_dis_init_t dis_init;
-
   qwr::init();
-
   bms::init();
 
   // gls_init.gl_meas_cccd_wr_sec = SEC_JUST_WORKS;
   // gls_init.gl_feature_rd_sec   = SEC_JUST_WORKS;
   // gls_init.racp_cccd_wr_sec    = SEC_JUST_WORKS;
   // gls_init.racp_wr_sec         = SEC_JUST_WORKS;
-
-  // Initialize Device Information Service.
-  memset(&dis_init, 0, sizeof(dis_init));
-
-  ble_srv_ascii_to_utf8(&dis_init.manufact_name_str, (char *)(MANUFACTURER_NAME));
-
-  dis_init.dis_char_rd_sec = SEC_OPEN;
-
-  err_code = ble_dis_init(&dis_init);
-  APP_ERROR_CHECK(err_code);
 }
 
 /**@brief Function for handling the Connection Parameter events.
