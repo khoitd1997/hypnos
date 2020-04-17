@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.*
-import android.preference.PreferenceManager
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
@@ -53,9 +52,11 @@ class BleService : Service() {
     private var scanRefreshDisposable: Disposable? = null
 
     private var connectDisposable: Disposable? = null
-    private var stateDisposable: Disposable? = null
 
     lateinit var sharedPreferences: SharedPreferences
+
+    private lateinit var mMessenger: Messenger
+    internal var scanResultsAdapter: ScanResultsAdapter? = null
 
     var testDisposable: Disposable? = null
 
@@ -89,22 +90,34 @@ class BleService : Service() {
             Context.MODE_PRIVATE
         )
 
-        testDisposable = Observable.interval(20, 10, TimeUnit.SECONDS)
-            .observeOn(AndroidSchedulers.mainThread())
-            .doFinally { testDisposable = null }
-            .subscribe {
-                val syncTime = getSyncTime()
+//        testDisposable = Observable.interval(20, 10, TimeUnit.SECONDS)
+//            .observeOn(AndroidSchedulers.mainThread())
+//            .doFinally { testDisposable = null }
+//            .subscribe {
+//                val syncTime = getSyncTime()
+//
+//                updateDeviceData(
+//                    Random.nextBoolean(),
+//                    Random.nextInt(10, 120),
+//                    Random.nextInt(0, 100),
+//                    syncTime
+//                )
+//                updateNotification()
+//            }
 
-                updateDeviceData(
-                    Random.nextBoolean(),
-                    Random.nextInt(10, 120),
-                    Random.nextInt(0, 100),
-                    syncTime
-                )
-                updateNotification()
-            }
+//        val notification = buildNotification()
+        val notificationIntent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0, notificationIntent, 0
+        )
 
-        val notification = buildNotification()
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("Disconnected")
+            .setSmallIcon(R.drawable.foreground_icon)
+            .setContentText("")
+            .setContentIntent(pendingIntent)
+            .build()
         startForeground(NOTIFICATION_ID, notification)
         Log.v("event", "onCreate of ble service")
     }
@@ -115,30 +128,28 @@ class BleService : Service() {
         return START_REDELIVER_INTENT
     }
 
-    private fun stopForegroundService() {
-        Log.d("event", "Stop foreground service.")
-        stopForeground(true)
-        stopSelf()
-    }
-
     override fun onDestroy() {
         super.onDestroy()
-        stateDisposable?.dispose()
+
+        Log.d("ble", "service being destroyed")
+
+        scanDisposable?.dispose()
+        disconnectDevice(false)
 
         val broadcastIntent = Intent()
         broadcastIntent.action = "restartservice"
         broadcastIntent.setClass(this, BleServiceStarter::class.java)
         this.sendBroadcast(broadcastIntent)
-    }
 
-    private lateinit var mMessenger: Messenger
-    internal var scanResultsAdapter: ScanResultsAdapter? = null
+        stopForeground(true)
+        stopSelf()
+    }
 
     internal class IncomingHandler(
         context: Context,
         private val applicationContext: Context = context.applicationContext
     ) : Handler() {
-        private var parentContext: BleService = context as BleService
+        private var parentContext = context as BleService
         override fun handleMessage(msg: Message) {
             val receivedObj = msg.obj
             with(parentContext) {
@@ -153,7 +164,7 @@ class BleService : Service() {
                     }
 
                     BleIpcCmd.START_SCAN -> {
-                        parentContext.scanBleDevices()
+                        scanBleDevices()
                     }
 
                     BleIpcCmd.STOP_SCAN -> {
@@ -172,10 +183,8 @@ class BleService : Service() {
                     }
 
                     BleIpcCmd.TEST -> {
-                        parentContext.scanResultsAdapter?.clearScanResults()
+                        scanResultsAdapter?.clearScanResults()
                     }
-
-                    else -> super.handleMessage(msg)
                 }
             }
         }
@@ -250,19 +259,49 @@ class BleService : Service() {
         Log.d("ble", "trying to connect device $macAddr")
         bleDevice = rxBleClient.getBleDevice(macAddr)
         bleDevice?.let { dev ->
-            dev.observeConnectionStateChanges()
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe { onConnectionStateChange(it) }
-                .let { stateDisposable = it }
-
             dev.establishConnection(false)
 //                .compose(ReplayingShare.instance())
                 .observeOn(AndroidSchedulers.mainThread())
-                .doFinally { connectDisposable = null }
+                .doFinally {
+                    Log.d("ble", "disconnected")
+                    val notificationIntent = Intent(this, MainActivity::class.java)
+                    val pendingIntent = PendingIntent.getActivity(
+                        this,
+                        0, notificationIntent, 0
+                    )
+
+                    val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+                        .setContentTitle("Disconnected")
+                        .setSmallIcon(R.drawable.foreground_icon)
+                        .setContentText("")
+                        .setContentIntent(pendingIntent)
+                        .build()
+                    val mNotificationManager: NotificationManager =
+                        getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+                    mNotificationManager.notify(NOTIFICATION_ID, notification)
+                    connectDisposable = null
+                }
                 .subscribe(
                     {
                         Log.d("ble", "connection received")
-                        updateNotification()
+                        val notificationIntent = Intent(this, MainActivity::class.java)
+                        val pendingIntent = PendingIntent.getActivity(
+                            this,
+                            0, notificationIntent, 0
+                        )
+
+                        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+                            .setContentTitle("Connected")
+                            .setSmallIcon(R.drawable.foreground_icon)
+                            .setContentText("")
+                            .setContentIntent(pendingIntent)
+                            .build()
+                        val mNotificationManager: NotificationManager =
+                            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+                        mNotificationManager.notify(NOTIFICATION_ID, notification)
+//                        updateNotification()
                     }, { Log.d("ble", "connection failed") })
                 .let { connectDisposable = it }
 //                .doFinally {
@@ -291,9 +330,11 @@ class BleService : Service() {
     }
 
     private fun disconnectDevice(unbond: Boolean) {
+        Log.d("ble", "disconnect func called")
         if (unbond) {
             unbondDevice()
         }
+
         connectDisposable?.dispose()
     }
 
@@ -331,7 +372,7 @@ class BleService : Service() {
                 .subscribe(
                     {
                         scanResultsAdapter?.addScanResult(it)
-                        if (bleDevice == null && getBondedMacAddr().contains(it.bleDevice.macAddress)
+                        if (connectDisposable == null && getBondedMacAddr().contains(it.bleDevice.macAddress)
                         ) {
                             Log.v("event", "connecting device")
                             connectDevice(it.bleDevice.macAddress)
@@ -352,16 +393,6 @@ class BleService : Service() {
     }
 
     private fun isScanning() = scanDisposable != null
-
-    private fun dispose() {
-//        Log.v("event", "disconnected")
-        scanDisposable?.dispose()
-        scanDisposable = null
-    }
-
-    private fun onConnectionStateChange(newState: RxBleConnection.RxBleConnectionState) {
-//        connection_state.text = newState.toString()
-    }
 
     private fun onScanFailure(throwable: Throwable) {
         if (throwable is BleScanException) Log.v("scan", throwable.toString())
