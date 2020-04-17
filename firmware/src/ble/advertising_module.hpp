@@ -3,11 +3,11 @@
 
 #include <cstdint>
 
-namespace advertising {
+namespace ble::advertising {
   constexpr uint8_t CONN_CFG_TAG = 1;
 
   void init();
   void start(const bool delete_bonds = false);
-}  // namespace advertising
+}  // namespace ble::advertising
 
 #endif  // ! _ADVERTISING_MODULE_HPP

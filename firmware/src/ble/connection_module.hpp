@@ -3,11 +3,11 @@
 
 #include <cstdint>
 
-namespace connection {
+namespace ble::connection {
   void init();
 
   void     set_handle(const uint16_t handle);
   uint16_t get_handle();
-}  // namespace connection
+}  // namespace ble::connection
 
 #endif  // ! _CONNECTION_MODULE_HPP

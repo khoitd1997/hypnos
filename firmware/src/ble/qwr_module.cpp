@@ -6,20 +6,20 @@
 
 #include "bms_module.hpp"
 
-namespace {
-  constexpr size_t QWR_MEM_BUFF_SIZE = 512;
-  uint8_t          m_qwr_mem[QWR_MEM_BUFF_SIZE];
+namespace ble::qwr {
+  namespace {
+    constexpr size_t QWR_MEM_BUFF_SIZE = 512;
+    uint8_t          m_qwr_mem[QWR_MEM_BUFF_SIZE];
 
-  NRF_BLE_QWR_DEF(m_qwr);
+    NRF_BLE_QWR_DEF(m_qwr);
 
-  uint16_t qwr_event_handler(nrf_ble_qwr_t *p_qwr, nrf_ble_qwr_evt_t *p_evt) {
-    return bms::qwr_event_callback(p_qwr, p_evt);
-  }
+    uint16_t qwr_event_handler(nrf_ble_qwr_t *p_qwr, nrf_ble_qwr_evt_t *p_evt) {
+      return bms::qwr_event_callback(p_qwr, p_evt);
+    }
 
-  void qwr_error_handler(uint32_t nrf_error) { APP_ERROR_HANDLER(nrf_error); }
-}  // namespace
+    void qwr_error_handler(uint32_t nrf_error) { APP_ERROR_HANDLER(nrf_error); }
+  }  // namespace
 
-namespace qwr {
   void init() {
     nrf_ble_qwr_init_t qwr_init{};
 
@@ -38,4 +38,4 @@ namespace qwr {
   }
 
   nrf_ble_qwr_t *get() { return &m_qwr; }
-}  // namespace qwr
+}  // namespace ble::qwr

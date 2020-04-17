@@ -16,62 +16,62 @@
 #include "pm_module.hpp"
 #include "power_module.hpp"
 
-namespace {
-  constexpr auto ADVERTISING_MODE = BLE_ADV_MODE_SLOW;
+namespace ble::advertising {
+  namespace {
+    constexpr auto ADVERTISING_MODE = BLE_ADV_MODE_SLOW;
 
-  //!< advertising interval (in units of 0.625 m
-  constexpr uint32_t ADVERTISING_FAST_INTERVAL = 100;
-  constexpr uint32_t ADVERTISING_SLOW_INTERVAL = 10000;
+    //!< advertising interval (in units of 0.625 m
+    constexpr uint32_t ADVERTISING_FAST_INTERVAL = 100;
+    constexpr uint32_t ADVERTISING_SLOW_INTERVAL = 10000;
 
-  constexpr uint32_t ADVERTISING_DURATION = 18000;  //!< units of 10 milliseconds.
+    constexpr uint32_t ADVERTISING_DURATION = 18000;  //!< units of 10 milliseconds.
 
-  ble_uuid_t ADVERTISING_UUIDS[] = {
-      {BLE_UUID_BMS_SERVICE, BLE_UUID_TYPE_BLE},
-  };
+    ble_uuid_t ADVERTISING_UUIDS[] = {
+        {BLE_UUID_BMS_SERVICE, BLE_UUID_TYPE_BLE},
+    };
 
-  BLE_ADVERTISING_DEF(m_advertising);
+    BLE_ADVERTISING_DEF(m_advertising);
 
-  void advertising_event_handler(ble_adv_evt_t ble_adv_evt) {
-    ret_code_t err_code;
+    void advertising_event_handler(ble_adv_evt_t ble_adv_evt) {
+      ret_code_t err_code;
 
-    switch (ble_adv_evt) {
-      case BLE_ADV_EVT_DIRECTED_HIGH_DUTY:
-        NRF_LOG_INFO("directed high duty");
-        err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
-        APP_ERROR_CHECK(err_code);
-        break;
+      switch (ble_adv_evt) {
+        case BLE_ADV_EVT_DIRECTED_HIGH_DUTY:
+          NRF_LOG_INFO("directed high duty");
+          err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
+          APP_ERROR_CHECK(err_code);
+          break;
 
-      case BLE_ADV_EVT_DIRECTED:
-        NRF_LOG_INFO("directed");
-        err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
-        APP_ERROR_CHECK(err_code);
-        break;
+        case BLE_ADV_EVT_DIRECTED:
+          NRF_LOG_INFO("directed");
+          err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
+          APP_ERROR_CHECK(err_code);
+          break;
 
-      case BLE_ADV_EVT_FAST:
-        NRF_LOG_INFO("Fast adverstising.");
-        err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
-        APP_ERROR_CHECK(err_code);
-        break;
+        case BLE_ADV_EVT_FAST:
+          NRF_LOG_INFO("Fast adverstising.");
+          err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
+          APP_ERROR_CHECK(err_code);
+          break;
 
-      case BLE_ADV_EVT_SLOW:
-        NRF_LOG_INFO("slow adverstising.");
-        err_code = bsp_indication_set(BSP_INDICATE_USER_STATE_2);
-        APP_ERROR_CHECK(err_code);
-        break;
+        case BLE_ADV_EVT_SLOW:
+          NRF_LOG_INFO("slow adverstising.");
+          err_code = bsp_indication_set(BSP_INDICATE_USER_STATE_2);
+          APP_ERROR_CHECK(err_code);
+          break;
 
-      case BLE_ADV_EVT_IDLE:
-        power::sleep();
-        break;
+        case BLE_ADV_EVT_IDLE:
+          power::sleep();
+          break;
 
-      default:
-        break;
+        default:
+          break;
+      }
     }
-  }
 
-  void advertising_error_handler(uint32_t nrf_error) { APP_ERROR_HANDLER(nrf_error); }
-}  // namespace
+    void advertising_error_handler(uint32_t nrf_error) { APP_ERROR_HANDLER(nrf_error); }
+  }  // namespace
 
-namespace advertising {
   void init() {
     ble_advertising_init_t init{};
 
@@ -113,4 +113,4 @@ namespace advertising {
       APP_ERROR_CHECK(ret);
     }
   }
-}  // namespace advertising
+}  // namespace ble::advertising

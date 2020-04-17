@@ -19,16 +19,16 @@ add_executable(
   ${PROJECT_NAME}_${BOARD_NAME}.elf
   ${NRF_SRCS}
   src/firmware_main.cpp
-  src/advertising_module.cpp
-  src/bms_module.cpp
-  src/qwr_module.cpp
-  src/pm_module.cpp
   src/power_module.cpp
-  src/connection_module.cpp
-  src/ble_module.cpp)
+  src/ble/advertising_module.cpp
+  src/ble/bms_module.cpp
+  src/ble/qwr_module.cpp
+  src/ble/pm_module.cpp
+  src/ble/connection_module.cpp
+  src/ble/ble_module.cpp)
 target_link_libraries(${PROJECT_NAME}_${BOARD_NAME}.elf)
 target_include_directories(
-  ${PROJECT_NAME}_${BOARD_NAME}.elf PUBLIC src/sdk_config
+  ${PROJECT_NAME}_${BOARD_NAME}.elf PUBLIC src/sdk_config src/ble
                                            src/sdk_config/${BOARD_NAME} src)
 target_link_options(${PROJECT_NAME}_${BOARD_NAME}.elf PUBLIC
                     -T${CMAKE_SOURCE_DIR}/gcc_${BOARD_NAME}.ld)
