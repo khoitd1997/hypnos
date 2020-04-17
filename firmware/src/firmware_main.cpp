@@ -44,8 +44,6 @@
 #include "app_timer.h"
 #include "ble.h"
 
-#include "ble_conn_params.h"
-#include "ble_conn_state.h"
 #include "ble_hci.h"
 #include "bsp_btn_ble.h"
 #include "fds.h"
@@ -62,6 +60,8 @@
 #include "nrf_log_default_backends.h"
 
 #include "advertising_module.hpp"
+
+#include "connection_module.hpp"
 
 #include "peer_manager_handler.h"
 #include "pm_module.hpp"
@@ -90,22 +90,11 @@
   (4 * SECOND_10_MS_UNITS)  //!< Connection supervisory timeout (4 seconds), Supervision Timeout
                             //!< uses 10 ms units.
 
-#define FIRST_CONN_PARAMS_UPDATE_DELAY \
-  APP_TIMER_TICKS(15000)  //!< Time from initiating event (connect or start of notification) to
-                          //!< first time sd_ble_gap_conn_param_update is called (5 seconds).
-#define NEXT_CONN_PARAMS_UPDATE_DELAY \
-  APP_TIMER_TICKS(5000)  //!< Time between each call to sd_ble_gap_conn_param_update after the first
-                         //!< call (30 seconds).
-#define MAX_CONN_PARAMS_UPDATE_COUNT \
-  3  //!< Number of attempts before giving up the connection parameter negotiation.
-
 #define DEAD_BEEF \
   0xDEADBEEF  //!< Value used as error code on stack dump, can be used to identify stack location on
               //!< stack unwind.
 
 NRF_BLE_GATT_DEF(m_gatt);  //!< GATT module instance.
-
-static uint16_t m_conn_handle = BLE_CONN_HANDLE_INVALID;  //!< Handle of the current connection.
 
 /**@brief Callback function for asserts in the SoftDevice.
  *
@@ -198,52 +187,6 @@ static void services_init(void) {
   // gls_init.racp_wr_sec         = SEC_JUST_WORKS;
 }
 
-/**@brief Function for handling the Connection Parameter events.
- *
- * @details This function will be called for all events in the Connection Parameters Module which
- *          are passed to the application.
- *          @note All this function does is to disconnect. This could have been done by simply
- *                setting the disconnect_on_fail configuration parameter, but instead we use the
- *                event handler mechanism to demonstrate its use.
- *
- * @param[in]   p_evt   Event received from the Connection Parameters Module.
- */
-static void on_conn_params_evt(ble_conn_params_evt_t *p_evt) {
-  ret_code_t err_code;
-
-  if (p_evt->evt_type == BLE_CONN_PARAMS_EVT_FAILED) {
-    err_code = sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_CONN_INTERVAL_UNACCEPTABLE);
-    APP_ERROR_CHECK(err_code);
-  }
-}
-
-/**@brief Function for handling a Connection Parameters error.
- *
- * @param[in]   nrf_error   Error code containing information about what went wrong.
- */
-static void conn_params_error_handler(uint32_t nrf_error) { APP_ERROR_HANDLER(nrf_error); }
-
-/**@brief Function for initializing the Connection Parameters module.
- */
-static void conn_params_init(void) {
-  ret_code_t             err_code;
-  ble_conn_params_init_t cp_init;
-
-  memset(&cp_init, 0, sizeof(cp_init));
-
-  cp_init.p_conn_params                  = NULL;
-  cp_init.first_conn_params_update_delay = FIRST_CONN_PARAMS_UPDATE_DELAY;
-  cp_init.next_conn_params_update_delay  = NEXT_CONN_PARAMS_UPDATE_DELAY;
-  cp_init.max_conn_params_update_count   = MAX_CONN_PARAMS_UPDATE_COUNT;
-  cp_init.start_on_notify_cccd_handle    = BLE_GATT_HANDLE_INVALID;
-  cp_init.disconnect_on_fail             = false;
-  cp_init.evt_handler                    = on_conn_params_evt;
-  cp_init.error_handler                  = conn_params_error_handler;
-
-  err_code = ble_conn_params_init(&cp_init);
-  APP_ERROR_CHECK(err_code);
-}
-
 /**@brief Function for handling BLE events.
  *
  * @param[in]   p_ble_evt   Bluetooth stack event.
@@ -259,15 +202,15 @@ static void ble_evt_handler(ble_evt_t const *p_ble_evt, void *p_context) {
       NRF_LOG_INFO("Connected");
       err_code = bsp_indication_set(BSP_INDICATE_CONNECTED);
       APP_ERROR_CHECK(err_code);
-      m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
-      bms::conn_handle_set(m_conn_handle);
-      qwr::conn_handle_set(m_conn_handle);
+      connection::set_handle(p_ble_evt->evt.gap_evt.conn_handle);
+      bms::conn_handle_set(connection::get_handle());
+      qwr::conn_handle_set(connection::get_handle());
       break;
 
     case BLE_GAP_EVT_DISCONNECTED:
       NRF_LOG_INFO("Disconnected");
       pm::delete_disconnected_bonds();
-      m_conn_handle = BLE_CONN_HANDLE_INVALID;
+      connection::set_handle(BLE_CONN_HANDLE_INVALID);
       APP_ERROR_CHECK(err_code);
       break;
 
@@ -336,7 +279,8 @@ static void bsp_event_handler(bsp_event_t event) {
   ret_code_t err_code;
   switch (event) {
     case BSP_EVENT_DISCONNECT:
-      err_code = sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
+      err_code = sd_ble_gap_disconnect(connection::get_handle(),
+                                       BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
       if (err_code != NRF_ERROR_INVALID_STATE) { APP_ERROR_CHECK(err_code); }
       break;
 
@@ -393,7 +337,7 @@ int main(void) {
   gatt_init();
   advertising::init();
   services_init();
-  conn_params_init();
+  connection::init();
   pm::init();
 
   // Start execution.

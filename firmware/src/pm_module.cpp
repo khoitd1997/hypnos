@@ -11,6 +11,8 @@
 
 #include "advertising_module.hpp"
 
+#include "connection_module.hpp"
+
 namespace {
 #define SEC_PARAM_BOND 0
 #define SEC_PARAM_MITM 1
@@ -75,8 +77,7 @@ namespace {
       } break;
 
       case PM_EVT_CONN_SEC_FAILED:
-        // TODO(khoi): Handle this
-        // m_conn_handle = BLE_CONN_HANDLE_INVALID;
+        connection::set_handle(BLE_CONN_HANDLE_INVALID);
         break;
 
       case PM_EVT_PEERS_DELETE_SUCCEEDED:
