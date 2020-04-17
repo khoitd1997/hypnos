@@ -20,6 +20,7 @@ add_executable(
   ${NRF_SRCS}
   src/firmware_main.cpp
   src/power_module.cpp
+  src/misc_module.cpp
   src/ble/advertising_module.cpp
   src/ble/bms_module.cpp
   src/ble/qwr_module.cpp

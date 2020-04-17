@@ -40,11 +40,9 @@
 
 #include <stdint.h>
 #include "app_error.h"
-#include "app_timer.h"
 #include "ble.h"
 
 #include "ble_hci.h"
-#include "bsp_btn_ble.h"
 #include "fds.h"
 #include "nordic_common.h"
 #include "nrf.h"
@@ -55,7 +53,6 @@
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
-#include "nrf_log_default_backends.h"
 
 #include "ble_module.hpp"
 
@@ -75,6 +72,8 @@
 
 #include "power_module.hpp"
 
+#include "misc_module.hpp"
+
 /**@brief Callback function for asserts in the SoftDevice.
  *
  * @details This function will be called in case of an assert in the SoftDevice.
@@ -92,48 +91,6 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t *p_file_name) {
   app_error_handler(0xDEADBEEF, line_num, p_file_name);
 }
 
-static void timers_init(void) {
-  ret_code_t err_code;
-
-  // Initialize timer module, making it use the scheduler.
-  err_code = app_timer_init();
-  APP_ERROR_CHECK(err_code);
-}
-
-#ifdef BOARD_PCA10056
-static void buttons_leds_event_handler(bsp_event_t event) {
-  //   ret_code_t err_code;
-  switch (event) {
-      // case BSP_EVENT_DISCONNECT:
-      //   err_code = sd_ble_gap_disconnect(ble::connection::get_handle(),
-      //                                    BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
-      //   if (err_code != NRF_ERROR_INVALID_STATE) { APP_ERROR_CHECK(err_code); }
-      //   break;
-
-    default:
-      break;
-  }
-}
-
-static void buttons_leds_init() {
-  ret_code_t  err_code;
-  bsp_event_t startup_event;
-
-  err_code = bsp_init(BSP_INIT_LEDS | BSP_INIT_BUTTONS, buttons_leds_event_handler);
-  APP_ERROR_CHECK(err_code);
-
-  err_code = bsp_btn_ble_init(NULL, &startup_event);
-  APP_ERROR_CHECK(err_code);
-}
-#endif
-
-static void log_init(void) {
-  const auto err_code = NRF_LOG_INIT(NULL);
-  APP_ERROR_CHECK(err_code);
-
-  NRF_LOG_DEFAULT_BACKENDS_INIT();
-}
-
 // TODO(khoi): Remove this after development is done
 // #pragma GCC diagnostic ignored "-Wunused-function"
 
@@ -142,12 +99,9 @@ static void log_init(void) {
 /**@brief Function for application main entry.
  */
 int main(void) {
-  // Initialize.
-  log_init();
-  timers_init();
-#ifdef BOARD_PCA10056
-  buttons_leds_init();
-#endif
+  misc::log::init();
+  misc::timer::init();
+  misc::bsp::init();
   power::init();
 
   ble::init();
