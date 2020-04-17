@@ -17,8 +17,13 @@ include_directories(SYSTEM ${NRF_INCS})
 
 add_executable(
   ${PROJECT_NAME}_${BOARD_NAME}.elf
-  ${NRF_SRCS} src/firmware_main.cpp src/advertising_module.cpp
-  src/bms_module.cpp src/qwr_module.cpp src/pm_module.cpp)
+  ${NRF_SRCS}
+  src/firmware_main.cpp
+  src/advertising_module.cpp
+  src/bms_module.cpp
+  src/qwr_module.cpp
+  src/pm_module.cpp
+  src/power_module.cpp)
 target_link_libraries(${PROJECT_NAME}_${BOARD_NAME}.elf)
 target_include_directories(
   ${PROJECT_NAME}_${BOARD_NAME}.elf PUBLIC src/sdk_config

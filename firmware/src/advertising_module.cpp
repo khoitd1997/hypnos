@@ -11,9 +11,10 @@
 
 #include "nrf_log.h"
 
-#include "pm_module.hpp"
-
 #include "nrf_sdh_ble.h"
+
+#include "pm_module.hpp"
+#include "power_module.hpp"
 
 namespace {
   constexpr auto ADVERTISING_MODE = BLE_ADV_MODE_SLOW;
@@ -29,22 +30,6 @@ namespace {
   };
 
   BLE_ADVERTISING_DEF(m_advertising);
-
-  // TODO(khoi): Moved this to power module
-  void sleep_mode_enter(void) {
-    ret_code_t err_code;
-
-    err_code = bsp_indication_set(BSP_INDICATE_IDLE);
-    APP_ERROR_CHECK(err_code);
-
-    // Prepare wakeup buttons.
-    err_code = bsp_btn_ble_sleep_mode_prepare();
-    APP_ERROR_CHECK(err_code);
-
-    // Go to system-off mode (this function will not return; wakeup will cause a reset).
-    err_code = sd_power_system_off();
-    APP_ERROR_CHECK(err_code);
-  }
 
   void advertising_event_handler(ble_adv_evt_t ble_adv_evt) {
     ret_code_t err_code;
@@ -75,7 +60,7 @@ namespace {
         break;
 
       case BLE_ADV_EVT_IDLE:
-        sleep_mode_enter();
+        power::sleep();
         break;
 
       default:

@@ -53,7 +53,6 @@
 #include "nrf.h"
 
 #include "nrf_ble_gatt.h"
-#include "nrf_pwr_mgmt.h"
 #include "nrf_sdh.h"
 #include "nrf_sdh_ble.h"
 #include "nrf_sdh_soc.h"
@@ -69,6 +68,8 @@
 
 #include "bms_module.hpp"
 #include "qwr_module.hpp"
+
+#include "power_module.hpp"
 
 #define DEVICE_NAME "Hypnos"  //!< Name of device. Will be included in the advertising data.
 #define MANUFACTURER_NAME \
@@ -374,22 +375,6 @@ static void log_init(void) {
   NRF_LOG_DEFAULT_BACKENDS_INIT();
 }
 
-/**@brief Function for initializing power management.
- */
-static void power_management_init(void) {
-  ret_code_t err_code;
-  err_code = nrf_pwr_mgmt_init();
-  APP_ERROR_CHECK(err_code);
-}
-
-/**@brief Function for handling the idle state (main loop).
- *
- * @details If there is no pending log operation, then sleep until next the next event occurs.
- */
-static void idle_state_handle(void) {
-  if (NRF_LOG_PROCESS() == false) { nrf_pwr_mgmt_run(); }
-}
-
 // TODO(khoi): Remove this after development is done
 // #pragma GCC diagnostic ignored "-Wunused-function"
 
@@ -402,7 +387,7 @@ int main(void) {
   log_init();
   timers_init();
   buttons_leds_init();
-  power_management_init();
+  power::init();
   ble_stack_init();
   gap_params_init();
   gatt_init();
@@ -416,8 +401,9 @@ int main(void) {
 
   advertising::start();
 
-  // Enter main loop.
-  for (;;) { idle_state_handle(); }
+  for (;;) {
+    if (!NRF_LOG_PROCESS()) { power::run(); }
+  }
 }
 
 /**
