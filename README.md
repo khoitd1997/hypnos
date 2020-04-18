@@ -30,27 +30,27 @@ I used to have a script that runs every couple hours to turn the computer off to
 
 ## Custom GATT
 
-To store an hour:minute info, needs 10 bits(4 for hour, 6 for minute). All timing is stored that way except for the current time service
+The custom service is called the ```Tracking Service```. ```Base and other UUIDs``` are taken [here](https://github.com/NordicPlayground/nRF5x-custom-ble-service-tutorial):
+
+```c
+// base is f364adc9-b000-4042-ba50-05ca45bf8abc
+#define UUID_BASE         {0xBC, 0x8A, 0xBF, 0x45, 0xCA, 0x05, 0x50, 0xBA, \
+                                          0x40, 0x42, 0xB0, 0x00, 0xC9, 0xAD, 0x64, 0xF3}
+#define UUID_SERVICE 0x1400
+```
+
+To store an hour:minute info, needs 11 bits(5 for hour, 6 for minute). All timing is stored that way except for the current time service
 
 All would require authentication to read/write
 
-| Handle | Type                  | Data Type      | Range                           |
-|--------|-----------------------|----------------|---------------------------------|
-|        | DAY_START             | time type      | 24-hour format                  |
-|        | DAY_END               | time type      | 24-hour format                  |
-|        | WORK_DURATION_MINUTE  | uint8          | 0-120                           |
-|        | BREAK_DURATION_MINUTE | uint8          | 0-120                           |
-|        | TODAY_EXCEPTION       | time type list | 0-5 items                       |
-|        | TOKENS_LEFT           | uint8          | depend on policy implementation |
-
-| Type                  | UUID                                 |
-|-----------------------|--------------------------------------|
-| DAY_START             | e3856dcf-d7df-43db-a796-c992f1751295 |
-| DAY_END               | 0db59a75-ee5b-4fcf-abee-ab8b8e784719 |
-| WORK_DURATION_MINUTE  | f1046dae-36ce-4859-b3db-ca9afeea973a |
-| BREAK_DURATION_MINUTE | b069a498-4e92-476d-80ff-dce449536c7d |
-| TODAY_EXCEPTION       | e78a37cc-5c28-4f1c-83b5-4160e38a7f31 |
-| TOKENS_LEFT           | 206aa605-6ef9-4bb1-b825-8c180018c349 |
+| UUID   | Type                  | Data Type         | Range                           |
+|--------|-----------------------|-------------------|---------------------------------|
+| 0x1401 | DAY_START             | time type         | 24-hour format                  |
+| 0x1402 | DAY_END               | time type         | 24-hour format                  |
+| 0x1403 | WORK_DURATION_MINUTE  | uint8             | 0-120                           |
+| 0x1404 | BREAK_DURATION_MINUTE | uint8             | 0-120                           |
+| 0x1405 | TODAY_EXCEPTIONS      | list of time type | 0-5 items                       |
+| 0x1406 | TOKENS_LEFT           | uint8             | depend on policy implementation |
 
 ## References
 
