@@ -13,8 +13,6 @@
 
 namespace ble::bas {
   namespace {
-    constexpr uint16_t DIODE_FWD_VOLT_DROP_MILLIVOLTS = 270;
-
     BLE_BAS_DEF(m_bas);
   }  // namespace
 
@@ -37,9 +35,8 @@ namespace ble::bas {
   }
 
   void update() {
-    const auto batt_lvl_in_milli_volts =
-        adc::sample_in_millivolt() + DIODE_FWD_VOLT_DROP_MILLIVOLTS;
-    const auto percentage_batt_lvl = battery_level_in_percent(batt_lvl_in_milli_volts);
+    const auto batt_lvl_in_milli_volts = adc::sample_battery_in_millivolt();
+    const auto percentage_batt_lvl     = battery_level_in_percent(batt_lvl_in_milli_volts);
     NRF_LOG_INFO("battery percentag: %u", percentage_batt_lvl);
 
     const auto err_code =

@@ -87,7 +87,7 @@
  * @param[in]   line_num   Line number of the failing ASSERT call.
  * @param[in]   file_name  File name of the failing ASSERT call.
  */
-void assert_nrf_callback(uint16_t line_num, const uint8_t *p_file_name) {
+void assert_nrf_callback(uint16_t line_num, const uint8_t* p_file_name) {
   //!< Value used as error code on stack dump, can be used to identify stack location on
   //!< stack unwind.
   app_error_handler(0xDEADBEEF, line_num, p_file_name);
@@ -97,6 +97,8 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t *p_file_name) {
 // #pragma GCC diagnostic ignored "-Wunused-function"
 
 // static void reset() { pm::delete_all_bonds_unsafe(); }
+
+APP_TIMER_DEF(m_timer_id);
 
 /**@brief Function for application main entry.
  */
@@ -117,6 +119,9 @@ int main(void) {
 
   ble::connection::init();
   ble::pm::init();
+
+  misc::timer::create(APP_TIMER_MODE_REPEATED, &m_timer_id, [](void* ctx) { ble::bas::update(); });
+  app_timer_start(m_timer_id, APP_TIMER_TICKS(2000), nullptr);
 
   // Start execution.
   NRF_LOG_INFO("Bond Management example started.");
