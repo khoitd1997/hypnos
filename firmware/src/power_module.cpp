@@ -25,5 +25,7 @@ namespace power {
     // Go to system-off mode (this function will not return; wakeup will cause a reset).
     err_code = sd_power_system_off();
     APP_ERROR_CHECK(err_code);
+    // NOTE: If not using softdevice then do:
+    // NRF_POWER->SYSTEMOFF = 1
   }
 }  // namespace power
