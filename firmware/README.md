@@ -21,3 +21,12 @@ bsp_event_to_button_action_assign(BTN_ID_SLEEP,
 
 [BSP Indication](https://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.sdk5.v15.0.0%2Fgroup__bsp.html)
 [BLE Security](https://duo.com/decipher/understanding-bluetooth-security)
+
+[DCDC vs LDO power converter](https://devzone.nordicsemi.com/f/nordic-q-a/8106/internal-dcdc-vs-ldo-for-nrf52-series)
+
+[Sending array in BLE data](https://devzone.nordicsemi.com/f/nordic-q-a/18040/ways-of-sending-a-float-array-as-a-value-of-a-characteristic)
+
+[Software RTC](https://github.com/NordicPlayground/nrf5-calendar-example)
+[Directed Advertising](https://devzone.nordicsemi.com/f/nordic-q-a/39950/directed-advertising---how-to-make-it-work)
+[Power Optimization](https://www.argenox.com/library/bluetooth-low-energy/ble-advertising-primer/)
+[CR2032 and NRF52](https://devzone.nordicsemi.com/f/nordic-q-a/36982/cr2032-coin-cell-battery-life-estimation-with-nrf52-as-beacon)
