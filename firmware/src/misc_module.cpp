@@ -9,16 +9,14 @@
 namespace misc {
   namespace timer {
     void init() {
-      ret_code_t err_code;
-
-      err_code = app_timer_init();
+      const auto err_code = app_timer_init();
       APP_ERROR_CHECK(err_code);
     }
 
     void create(const app_timer_mode_t      mode,
-                app_timer_id_t&             id,
+                app_timer_id_t const*       id,
                 app_timer_timeout_handler_t callback) {
-      const auto err_code = app_timer_create(&id, mode, callback);
+      const auto err_code = app_timer_create(id, mode, callback);
       APP_ERROR_CHECK(err_code);
     }
   }  // namespace timer

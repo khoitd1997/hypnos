@@ -1,8 +1,5 @@
 #include "adc_module.hpp"
 
-#include <array>
-#include <limits>
-
 #include "app_error.h"
 
 #include "nrf_drv_saadc.h"
@@ -21,23 +18,9 @@ namespace adc {
 #define ADC_RESULT_IN_MILLI_VOLTS(ADC_VALUE) \
   ((((ADC_VALUE)*ADC_REF_VOLTAGE_IN_MILLIVOLTS) / ADC_RES_10BIT) * ADC_PRE_SCALING_COMPENSATION)
 
-    typedef void (*adc_event_callback_t)(nrf_drv_saadc_evt_t const* p_event,
-                                         const uint16_t             result_millivolt);
-    std::array<adc_event_callback_t, 1> m_adc_event_callbacks{ble::bas::adc_event_callback};
+    constexpr uint8_t ADC_DEFAULT_CHANNEL = 0;
 
-    nrf_saadc_value_t m_adc_buf[2];
-
-    void adc_event_handler(nrf_drv_saadc_evt_t const* p_event) {
-      auto adc_result_millivolt = std::numeric_limits<uint16_t>::max();
-
-      if (p_event->type == NRF_DRV_SAADC_EVT_DONE) {
-        adc_result_millivolt = ADC_RESULT_IN_MILLI_VOLTS(p_event->data.done.p_buffer[0]);
-        const auto err_code  = nrf_drv_saadc_buffer_convert(p_event->data.done.p_buffer, 1);
-        APP_ERROR_CHECK(err_code);
-      }
-
-      for (const auto& cb : m_adc_event_callbacks) { cb(p_event, adc_result_millivolt); }
-    }
+    void adc_event_handler(nrf_drv_saadc_evt_t const* p_event) {}
   }  // namespace
 
   void init() {
@@ -46,14 +29,16 @@ namespace adc {
     APP_ERROR_CHECK(err_code);
 
     nrf_saadc_channel_config_t config =
-        NRF_DRV_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_VDD);
-    err_code = nrf_drv_saadc_channel_init(0, &config);
+        NRF_DRV_SAADC_DEFAULT_CHANNEL_CONFIG_SE(SAADC_CH_PSELP_PSELP_AnalogInput0);
+    err_code = nrf_drv_saadc_channel_init(ADC_DEFAULT_CHANNEL, &config);
+    APP_ERROR_CHECK(err_code);
+  }
+
+  uint16_t sample_in_millivolt() {
+    nrf_saadc_value_t temp;
+    const auto        err_code = nrf_drv_saadc_sample_convert(ADC_DEFAULT_CHANNEL, &temp);
     APP_ERROR_CHECK(err_code);
 
-    err_code = nrf_drv_saadc_buffer_convert(&m_adc_buf[0], 1);
-    APP_ERROR_CHECK(err_code);
-
-    err_code = nrf_drv_saadc_buffer_convert(&m_adc_buf[1], 1);
-    APP_ERROR_CHECK(err_code);
+    return ADC_RESULT_IN_MILLI_VOLTS(temp);
   }
 }  // namespace adc

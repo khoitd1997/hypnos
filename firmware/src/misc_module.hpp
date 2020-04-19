@@ -8,7 +8,7 @@ namespace misc {
     void init();
 
     void create(const app_timer_mode_t      mode,
-                app_timer_id_t&             id,
+                app_timer_id_t const*       id,
                 app_timer_timeout_handler_t callback);
   }  // namespace timer
   namespace bsp {
