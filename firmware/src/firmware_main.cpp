@@ -120,8 +120,8 @@ int main(void) {
   ble::connection::init();
   ble::pm::init();
 
-  misc::timer::create(APP_TIMER_MODE_REPEATED, &m_timer_id, [](void* ctx) { ble::bas::update(); });
-  app_timer_start(m_timer_id, APP_TIMER_TICKS(2000), nullptr);
+  //   misc::timer::create(APP_TIMER_MODE_REPEATED, &m_timer_id, [](void* ctx) { ble::bas::update();
+  //   }); app_timer_start(m_timer_id, APP_TIMER_TICKS(6000), nullptr);
 
   // Start execution.
   NRF_LOG_INFO("Bond Management example started.");
