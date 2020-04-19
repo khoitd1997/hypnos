@@ -12,7 +12,7 @@
         "*.rasi": "css",
         "*.in": "cmake",
         "conanfile.txt": "toml",
-        "${fileDirname}/../nrf_sdk/sdk/*.h": "c",
-        "${fileDirname}/../nrf_sdk/sdk/*.c": "c"
+        "${workspaceFolder}/nrf_sdk/sdk/*.h": "c",
+        "${workspaceFolder}/nrf_sdk/sdk/*.c": "c"
     }
 }
