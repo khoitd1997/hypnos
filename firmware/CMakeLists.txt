@@ -21,8 +21,10 @@ add_executable(
   src/firmware_main.cpp
   src/power_module.cpp
   src/misc_module.cpp
+  src/adc_module.cpp
   src/ble/advertising_module.cpp
   src/ble/bms_module.cpp
+  src/ble/bas_module.cpp
   src/ble/qwr_module.cpp
   src/ble/pm_module.cpp
   src/ble/connection_module.cpp

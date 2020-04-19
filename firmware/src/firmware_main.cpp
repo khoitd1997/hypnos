@@ -70,6 +70,8 @@
 #include "bms_module.hpp"
 #include "qwr_module.hpp"
 
+#include "bas_module.hpp"
+
 #include "power_module.hpp"
 
 #include "misc_module.hpp"
@@ -111,6 +113,7 @@ int main(void) {
 
   ble::qwr::init();
   ble::bms::init();
+  ble::bas::init();
 
   ble::connection::init();
   ble::pm::init();
