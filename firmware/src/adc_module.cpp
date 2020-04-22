@@ -12,16 +12,16 @@
 
 namespace adc {
   namespace {
-    constexpr int16_t ADC_REF_VOLTAGE_IN_MILLIVOLTS = 600; /**< Reference voltage used by ADC */
-    constexpr int16_t ADC_PRE_SCALING_COMPENSATION  = 6;
-    constexpr int16_t ADC_RES_10BIT                 = 1024;
+    constexpr int16_t ADC_REF_VOLTAGE_IN_MILLIVOLT = 600;
+    constexpr int16_t ADC_PRE_SCALING_COMPENSATION = 6;
+    constexpr int16_t ADC_RES_10BIT                = 1024;
 
     inline int16_t conv_adc_result_to_millivolt(const nrf_saadc_value_t val) {
-      return ((val * ADC_REF_VOLTAGE_IN_MILLIVOLTS) / ADC_RES_10BIT) * ADC_PRE_SCALING_COMPENSATION;
+      return ((val * ADC_REF_VOLTAGE_IN_MILLIVOLT) / ADC_RES_10BIT) * ADC_PRE_SCALING_COMPENSATION;
     }
 
-    constexpr uint8_t  ADC_VDD_CHANNEL                = 0;
-    constexpr uint16_t DIODE_FWD_VOLT_DROP_MILLIVOLTS = 270;
+    constexpr uint8_t  ADC_VDD_CHANNEL               = 0;
+    constexpr uint16_t DIODE_FWD_VOLT_DROP_MILLIVOLT = 270;
 
     void adc_event_handler(nrf_drv_saadc_evt_t const* p_event) {}
   }  // namespace
@@ -48,6 +48,6 @@ namespace adc {
   }
 
   uint16_t sample_battery_in_millivolt() {
-    return std::max(DIODE_FWD_VOLT_DROP_MILLIVOLTS + sample_in_millivolt(ADC_VDD_CHANNEL), 0);
+    return std::max(DIODE_FWD_VOLT_DROP_MILLIVOLT + sample_in_millivolt(ADC_VDD_CHANNEL), 0);
   }
 }  // namespace adc
