@@ -55,10 +55,6 @@ All would require authentication to read/write
 ## References
 
 [BLE Chips Power Consumption](https://www.argenox.com/library/bluetooth-low-energy/bluetooth-le-chipset-guide-2019/#ble-device-comparison)
-[Software RTC](https://github.com/NordicPlayground/nrf5-calendar-example)
-[Directed Advertising](https://devzone.nordicsemi.com/f/nordic-q-a/39950/directed-advertising---how-to-make-it-work)
-[Power Optimization](https://www.argenox.com/library/bluetooth-low-energy/ble-advertising-primer/)
-[CR2032 and NRF52](https://devzone.nordicsemi.com/f/nordic-q-a/36982/cr2032-coin-cell-battery-life-estimation-with-nrf52-as-beacon)
 [Picking Advertising Interval](https://www.beaconzone.co.uk/ibeaconadvertisinginterval)
 
 [Current Time Service](https://stackoverflow.com/questions/35695711/how-to-correctly-set-the-date-and-time-in-a-bluetooth-low-energy-peripheral)
