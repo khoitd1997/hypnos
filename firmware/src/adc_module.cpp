@@ -27,14 +27,12 @@ namespace adc {
   }  // namespace
 
   void init() {
-    nrf_drv_saadc_config_t saadc_config{};
-    saadc_config.low_power_mode = true;  // NOTE: This disables EasyDMA when not sampling
-
-    auto err_code = nrf_drv_saadc_init(&saadc_config, adc_event_handler);
-    APP_ERROR_CHECK(err_code);
-
     nrf_saadc_channel_config_t config =
         NRF_DRV_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_VDD);
+
+    auto err_code = nrf_drv_saadc_init(nullptr, adc_event_handler);
+    APP_ERROR_CHECK(err_code);
+
     err_code = nrf_drv_saadc_channel_init(ADC_VDD_CHANNEL, &config);
     APP_ERROR_CHECK(err_code);
   }

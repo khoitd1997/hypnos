@@ -37,7 +37,7 @@ namespace ble::bas {
   void update() {
     const auto batt_lvl_in_milli_volts = adc::sample_battery_in_millivolt();
     const auto percentage_batt_lvl     = battery_level_in_percent(batt_lvl_in_milli_volts);
-    NRF_LOG_INFO("battery percentag: %u", percentage_batt_lvl);
+    NRF_LOG_INFO("battery percentage: %u", percentage_batt_lvl);
 
     const auto err_code =
         ble_bas_battery_level_update(&m_bas, percentage_batt_lvl, BLE_CONN_HANDLE_ALL);
