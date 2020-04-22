@@ -70,6 +70,10 @@
 #include "bms_module.hpp"
 #include "qwr_module.hpp"
 
+#include "bas_module.hpp"
+
+#include "adc_module.hpp"
+
 #include "power_module.hpp"
 
 #include "misc_module.hpp"
@@ -85,7 +89,7 @@
  * @param[in]   line_num   Line number of the failing ASSERT call.
  * @param[in]   file_name  File name of the failing ASSERT call.
  */
-void assert_nrf_callback(uint16_t line_num, const uint8_t *p_file_name) {
+void assert_nrf_callback(uint16_t line_num, const uint8_t* p_file_name) {
   //!< Value used as error code on stack dump, can be used to identify stack location on
   //!< stack unwind.
   app_error_handler(0xDEADBEEF, line_num, p_file_name);
@@ -96,6 +100,8 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t *p_file_name) {
 
 // static void reset() { pm::delete_all_bonds_unsafe(); }
 
+APP_TIMER_DEF(m_timer_id);
+
 /**@brief Function for application main entry.
  */
 int main(void) {
@@ -105,15 +111,20 @@ int main(void) {
   power::init();
 
   ble::init();
+  adc::init();
   ble::gap::init();
   ble::gatt::init();
   ble::advertising::init();
 
   ble::qwr::init();
   ble::bms::init();
+  ble::bas::init();
 
   ble::connection::init();
   ble::pm::init();
+
+  //   misc::timer::create(APP_TIMER_MODE_REPEATED, &m_timer_id, [](void* ctx) { ble::bas::update();
+  //   }); app_timer_start(m_timer_id, APP_TIMER_TICKS(6000), nullptr);
 
   // Start execution.
   NRF_LOG_INFO("Bond Management example started.");

@@ -13,14 +13,15 @@ import com.polidea.rxandroidble2.*
 import com.polidea.rxandroidble2.exceptions.BleScanException
 import com.polidea.rxandroidble2.scan.ScanFilter
 import com.polidea.rxandroidble2.scan.ScanSettings
+import com.polidea.rxandroidble2.helpers.ValueInterpreter
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
-import kotlin.random.Random
-import kotlin.random.nextUInt
+
+import java.util.*
 
 
 class BleService : Service() {
@@ -38,6 +39,9 @@ class BleService : Service() {
             CONNECT_DEVICE, DISCONNECT_DEVICE,
             TEST
         }
+
+        private val BATTERY_LEVEL_UUID: UUID =
+            UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb")
 
         data class InitInfo(val scanAdapter: ScanResultsAdapter)
         data class ConnectInfo(val macAddr: String)
@@ -301,6 +305,16 @@ class BleService : Service() {
                             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
                         mNotificationManager.notify(NOTIFICATION_ID, notification)
+
+                        it.readCharacteristic(BATTERY_LEVEL_UUID).subscribe(
+                            { result ->
+                                val temp = ValueInterpreter.getIntValue(result, ValueInterpreter.FORMAT_UINT8, 0)
+                                Log.d("ble", "characteristic read result: $temp")
+                            },
+                            { error ->
+                                Log.d("ble", "error reading characteristics: $error")
+                            }
+                        )
 //                        updateNotification()
                     }, { Log.d("ble", "connection failed") })
                 .let { connectDisposable = it }

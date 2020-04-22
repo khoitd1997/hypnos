@@ -28,6 +28,7 @@ namespace ble::advertising {
 
     ble_uuid_t ADVERTISING_UUIDS[] = {
         {BLE_UUID_BMS_SERVICE, BLE_UUID_TYPE_BLE},
+        {BLE_UUID_BATTERY_SERVICE, BLE_UUID_TYPE_BLE},
     };
 
     BLE_ADVERTISING_DEF(m_advertising);

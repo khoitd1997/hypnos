@@ -12,11 +12,7 @@
         "*.rasi": "css",
         "*.in": "cmake",
         "conanfile.txt": "toml",
-        "nrf_log_default_backends.h": "c",
-        "nrf_delay.h": "c",
-        "nrf_drv_twi.h": "c",
-        "app_util_platform.h": "c",
-        "sensorsim.h": "c",
-        "ble_srv_common.h": "c"
+        "${workspaceFolder}/nrf_sdk/sdk/*.h": "c",
+        "${workspaceFolder}/nrf_sdk/sdk/*.c": "c"
     }
 }
