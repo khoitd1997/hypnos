@@ -9,6 +9,10 @@ NRF52840 power consumption data, measured using a trueRMS multimeter with supply
 | Slow | 3000                   | 50  |
 | Slow | 10000                  | 40  |
 
+## State Machine
+
+[Link](https://www.lucidchart.com/documents/view/bfb6aadf-c374-40c3-be28-2cf55af65832/0_0)
+
 ## References
 
 The special event like BSP_EVENT_SYSOFF is assigned using:
