@@ -11596,6 +11596,10 @@
 #define PM_BLE_OBSERVER_PRIO 1
 #endif
 
+#ifndef TIMETABLE_SERVICE_OBSERVER_PRIO
+#define TIMETABLE_SERVICE_OBSERVER_PRIO 2
+#endif
+
 // </h>
 //==========================================================
 

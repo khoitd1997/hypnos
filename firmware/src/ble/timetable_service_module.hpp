@@ -13,7 +13,7 @@
  */
 #define BLE_CUS_DEF(_name) \
   static ble_cus_t _name;  \
-  NRF_SDH_BLE_OBSERVER(_name##_obs, BLE_HRS_BLE_OBSERVER_PRIO, ble_cus_on_ble_evt, &_name)
+  NRF_SDH_BLE_OBSERVER(_name##_obs, TIMETABLE_SERVICE_OBSERVER_PRIO, ble_cus_on_ble_evt, &_name)
 
 // CUSTOM_SERVICE_UUID_BASE f364adc9-b000-4042-ba50-05ca45bf8abc
 
