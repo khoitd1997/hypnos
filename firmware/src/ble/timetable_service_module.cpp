@@ -7,11 +7,6 @@
 #include "nrf_log.h"
 #include "sdk_common.h"
 
-/**@brief Function for handling the Connect event.
- *
- * @param[in]   p_cus       Custom Service structure.
- * @param[in]   p_ble_evt   Event received from the BLE stack.
- */
 static void on_connect(ble_cus_t *p_cus, ble_evt_t const *p_ble_evt) {
   p_cus->conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
 
@@ -22,11 +17,6 @@ static void on_connect(ble_cus_t *p_cus, ble_evt_t const *p_ble_evt) {
   p_cus->evt_handler(p_cus, &evt);
 }
 
-/**@brief Function for handling the Disconnect event.
- *
- * @param[in]   p_cus       Custom Service structure.
- * @param[in]   p_ble_evt   Event received from the BLE stack.
- */
 static void on_disconnect(ble_cus_t *p_cus, ble_evt_t const *p_ble_evt) {
   UNUSED_PARAMETER(p_ble_evt);
   p_cus->conn_handle = BLE_CONN_HANDLE_INVALID;
@@ -38,11 +28,6 @@ static void on_disconnect(ble_cus_t *p_cus, ble_evt_t const *p_ble_evt) {
   p_cus->evt_handler(p_cus, &evt);
 }
 
-/**@brief Function for handling the Write event.
- *
- * @param[in]   p_cus       Custom Service structure.
- * @param[in]   p_ble_evt   Event received from the BLE stack.
- */
 static void on_write(ble_cus_t *p_cus, ble_evt_t const *p_ble_evt) {
   ble_gatts_evt_write_t const *p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
 
@@ -95,13 +80,6 @@ void ble_cus_on_ble_evt(ble_evt_t const *p_ble_evt, void *p_context) {
   }
 }
 
-/**@brief Function for adding the Custom Value characteristic.
- *
- * @param[in]   p_cus        Battery Service structure.
- * @param[in]   p_cus_init   Information needed to initialize the service.
- *
- * @return      NRF_SUCCESS on success, otherwise an error code.
- */
 static uint32_t custom_value_char_add(ble_cus_t *p_cus, const ble_cus_init_t *p_cus_init) {
   uint32_t            err_code;
   ble_gatts_char_md_t char_md;
