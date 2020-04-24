@@ -88,8 +88,8 @@ namespace ble {
 
     // Configure the BLE stack using the default settings.
     // Fetch the start address of the application RAM.
-    uint32_t ram_start = 0;
-    err_code           = nrf_sdh_ble_default_cfg_set(advertising::CONN_CFG_TAG, &ram_start);
+    uint32_t ram_start;
+    err_code = nrf_sdh_ble_default_cfg_set(advertising::CONN_CFG_TAG, &ram_start);
     APP_ERROR_CHECK(err_code);
 
     // Enable BLE stack.

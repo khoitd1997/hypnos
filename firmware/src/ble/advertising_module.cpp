@@ -16,6 +16,8 @@
 #include "pm_module.hpp"
 #include "power_module.hpp"
 
+#include "timetable_service_module.hpp"
+
 namespace ble::advertising {
   namespace {
     constexpr auto ADVERTISING_MODE = BLE_ADV_MODE_SLOW;
@@ -27,8 +29,8 @@ namespace ble::advertising {
     constexpr uint32_t ADVERTISING_DURATION = 18000;  //!< units of 10 milliseconds.
 
     ble_uuid_t ADVERTISING_UUIDS[] = {
-        {BLE_UUID_BMS_SERVICE, BLE_UUID_TYPE_BLE},
-        {BLE_UUID_BATTERY_SERVICE, BLE_UUID_TYPE_BLE},
+        {BLE_UUID_BMS_SERVICE, BLE_UUID_TYPE_BLE}, {BLE_UUID_BATTERY_SERVICE, BLE_UUID_TYPE_BLE},
+        // {CUSTOM_SERVICE_UUID, BLE_UUID_TYPE_VENDOR_BEGIN},
     };
 
     BLE_ADVERTISING_DEF(m_advertising);

@@ -3,7 +3,7 @@ project(hypnos C CXX ASM)
 
 # message("Flags are ${CMAKE_EXE_LINKER_FLAGS}")
 
-set(common_flags "-D__HEAP_SIZE=8192 -D__STACK_SIZE=8192")
+set(common_flags "-D__HEAP_SIZE=8192 -D__STACK_SIZE=8192 -DDEBUG")
 set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${common_flags}")
 set(CMAKE_C_FLAGS
     "${CMAKE_C_FLAGS} -Wno-pointer-compare ${common_flags} -Og -Wall")
@@ -25,6 +25,7 @@ add_executable(
   src/ble/advertising_module.cpp
   src/ble/bms_module.cpp
   src/ble/bas_module.cpp
+  src/ble/timetable_service_module.cpp
   src/ble/qwr_module.cpp
   src/ble/pm_module.cpp
   src/ble/connection_module.cpp
