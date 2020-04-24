@@ -30,7 +30,7 @@ I used to have a script that runs every couple hours to turn the computer off to
 
 ## Custom GATT
 
-The custom service is called the ```Tracking Service```. ```Base and other UUIDs``` are taken [here](https://github.com/NordicPlayground/nRF5x-custom-ble-service-tutorial):
+The custom service is called the ```Timetable Service```. ```Base and other UUIDs``` are taken [here](https://github.com/NordicPlayground/nRF5x-custom-ble-service-tutorial):
 
 ```c
 // base is f364adc9-b000-4042-ba50-05ca45bf8abc
@@ -39,18 +39,20 @@ The custom service is called the ```Tracking Service```. ```Base and other UUIDs
 #define UUID_SERVICE 0x1400
 ```
 
-To store an hour:minute info, needs 11 bits(5 for hour, 6 for minute). All timing is stored that way except for the current time service
+To store an hour:minute info, needs 11 bits(5 for hour, 6 for minute) for 24-hour format. All timing is stored that way except for the current time service
 
 All would require authentication to read/write
 
-| UUID   | Type                  | Data Type         | Range                           |
-|--------|-----------------------|-------------------|---------------------------------|
-| 0x1401 | DAY_START             | time type         | 24-hour format                  |
-| 0x1402 | DAY_END               | time type         | 24-hour format                  |
-| 0x1403 | WORK_DURATION_MINUTE  | uint8             | 0-120                           |
-| 0x1404 | BREAK_DURATION_MINUTE | uint8             | 0-120                           |
-| 0x1405 | TODAY_EXCEPTIONS      | list of time type | 0-5 items                       |
-| 0x1406 | TOKENS_LEFT           | uint8             | depend on policy implementation |
+| UUID   | Type                  | Data Type               | Range                           |
+|--------|-----------------------|-------------------------|---------------------------------|
+| 0x1401 | DAY_START             | time type               | 24-hour format                  |
+| 0x1402 | DAY_END               | time type               | 24-hour format                  |
+| 0x1403 | WORK_DURATION_MINUTE  | uint8                   | 0-120                           |
+| 0x1404 | BREAK_DURATION_MINUTE | uint8                   | 0-120                           |
+| 0x1405 | ACTIVE_EXCEPTIONS     | list of pair epoch time | 0-4 exceptions                  |
+| 0x1406 | TOKENS_LEFT           | uint8                   | depend on policy implementation |
+
+Max of 4 exceptions can be active at one time
 
 ## References
 
