@@ -45,8 +45,8 @@ All would require authentication to read/write
 
 | UUID   | Type                  | Data Type               | Range                           |
 |--------|-----------------------|-------------------------|---------------------------------|
-| 0x1401 | DAY_START             | time type               | 24-hour format                  |
-| 0x1402 | DAY_END               | time type               | 24-hour format                  |
+| 0x1401 | MORNING_CURFEW_END    | time type               | 24-hour format                  |
+| 0x1402 | NIGHT_CURFEW_START    | time type               | 24-hour format                  |
 | 0x1403 | WORK_DURATION_MINUTE  | uint8                   | 0-120                           |
 | 0x1404 | BREAK_DURATION_MINUTE | uint8                   | 0-120                           |
 | 0x1405 | ACTIVE_EXCEPTIONS     | list of pair epoch time | 0-4 exceptions                  |
