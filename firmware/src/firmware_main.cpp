@@ -102,22 +102,6 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t* p_file_name) {
 
 // static void reset() { pm::delete_all_bonds_unsafe(); }
 
-BLE_CUS_DEF(m_cus);
-
-static void on_cus_evt(ble_cus_t* p_cus_service, ble_cus_evt_t* p_evt) {
-  switch (p_evt->evt_type) {
-    case BLE_CUS_EVT_CONNECTED:
-      break;
-
-    case BLE_CUS_EVT_DISCONNECTED:
-      break;
-
-    default:
-      // No implementation needed.
-      break;
-  }
-}
-
 APP_TIMER_DEF(m_timer_id);
 
 /**@brief Function for application main entry.
@@ -135,15 +119,7 @@ int main(void) {
 
   ble::qwr::init();
 
-  ble_cus_init_t cus_init = {0};
-  // Initialize CUS Service init structure to zero.
-  cus_init.evt_handler = on_cus_evt;
-
-  BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cus_init.custom_value_char_attr_md.read_perm);
-  BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cus_init.custom_value_char_attr_md.write_perm);
-
-  auto err_code = ble_cus_init(&m_cus, &cus_init);
-  APP_ERROR_CHECK(err_code);
+  ble::timetable_service::init();
 
   ble::bms::init();
   ble::bas::init();
