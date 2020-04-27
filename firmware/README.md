@@ -1,5 +1,11 @@
 # Hypnos Firmware
 
+## Tools
+
+Make sure ```nRF Command Line Tools```, ```JLink Driver``` and ```nrfutil```(pip) are installed
+
+## Power Consumption Data
+
 NRF52840 power consumption data, measured using a trueRMS multimeter with supply voltage of 3V, assuming bonded device. At the longest adv interval, the device is still detected and connected pretty fast, although to the time connect is inconsistent.
 
 | Type | Adv Interval(0.625 ms) | uA  |
