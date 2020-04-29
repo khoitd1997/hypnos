@@ -98,6 +98,9 @@ namespace ble::advertising {
     init.config.ble_adv_slow_interval = ADVERTISING_SLOW_INTERVAL;
     init.config.ble_adv_slow_timeout  = ADVERTISING_DURATION;
 
+    init.config.ble_adv_extended_enabled = true;
+    init.config.ble_adv_secondary_phy    = BLE_GAP_PHY_2MBPS;
+
     init.evt_handler   = advertising_event_handler;
     init.error_handler = advertising_error_handler;
 
