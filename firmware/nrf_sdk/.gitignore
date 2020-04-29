@@ -1,4 +1,3 @@
 /CMakeLists.txt
-/toolchain_pca10056.cmake
-/toolchain_pca10059.cmake
+/toolchain.cmake
 make_build

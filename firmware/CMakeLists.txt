@@ -3,7 +3,10 @@ project(hypnos C CXX ASM)
 
 # message("Flags are ${CMAKE_EXE_LINKER_FLAGS}")
 
-set(common_flags "-D__HEAP_SIZE=8192 -D__STACK_SIZE=8192 -DDEBUG")
+string(TOUPPER ${BOARD_NAME} BOARD_NAME_UPPERCASE)
+set(common_flags
+    "-D__HEAP_SIZE=8192 -D__STACK_SIZE=8192 -DDEBUG -DBOARD_${BOARD_NAME_UPPERCASE}"
+)
 set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${common_flags}")
 set(CMAKE_C_FLAGS
     "${CMAKE_C_FLAGS} -Wno-pointer-compare ${common_flags} -Og -Wall")
