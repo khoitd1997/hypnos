@@ -27,12 +27,11 @@ namespace ble {
     constexpr auto BLE_OBSERVER_PRIORITY =
         3;  //!< Application's BLE observer priority. You shouldn't need to modify this value
 
-    constexpr ble_gap_phys_t preferred_phys = {
-        .tx_phys = BLE_GAP_PHY_2MBPS,
-        .rx_phys = BLE_GAP_PHY_2MBPS,
-    };
-
     void gap_phy_update(const uint16_t conn_handle) {
+      constexpr ble_gap_phys_t preferred_phys = {
+          .tx_phys = BLE_GAP_PHY_2MBPS,
+          .rx_phys = BLE_GAP_PHY_2MBPS,
+      };
       const auto err_code = sd_ble_gap_phy_update(conn_handle, &preferred_phys);
       APP_ERROR_CHECK(err_code);
     }
