@@ -5,5 +5,7 @@
 
 namespace ble::timetable_service {
   void init();
+
+  void value_update();
 }  // namespace ble::timetable_service
 #endif
