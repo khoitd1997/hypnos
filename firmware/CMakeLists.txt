@@ -26,8 +26,8 @@ add_custom_target(erase_all COMMAND ${nrfjprog_exe} -f nrf52 --eraseall)
 
 add_custom_target(
   flash_softdevice
-  COMMAND ${nrfjprog_exe} -f nrf52 --program s140_nrf52_7.0.1_softdevice.hex
-          --sectorerase
+  COMMAND ${nrfjprog_exe} -f nrf52 --program
+          ${PROJECT_SOURCE_DIR}/s140_nrf52_7.0.1_softdevice.hex --sectorerase
   COMMAND ${nrfjprog_exe} -f nrf52 --reset)
 
 include_directories(SYSTEM ${NRF_INCS})
