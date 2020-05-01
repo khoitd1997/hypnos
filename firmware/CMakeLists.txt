@@ -1,12 +1,10 @@
 cmake_minimum_required(VERSION 3.14)
 project(hypnos C CXX ASM)
 
-# message("Flags are ${CMAKE_EXE_LINKER_FLAGS}")
+find_program(nrfjprog Nrfjprog)
+find_program(java Java)
 
-string(TOUPPER ${BOARD_NAME} BOARD_NAME_UPPERCASE)
-set(common_flags
-    "-D__HEAP_SIZE=8192 -D__STACK_SIZE=8192 -DDEBUG -DBOARD_${BOARD_NAME_UPPERCASE}"
-)
+set(common_flags "-D__HEAP_SIZE=8192 -D__STACK_SIZE=8192 -DDEBUG")
 set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${common_flags}")
 set(CMAKE_C_FLAGS
     "${CMAKE_C_FLAGS} -Wno-pointer-compare ${common_flags} -Og -Wall")
@@ -16,28 +14,60 @@ set(CMAKE_CXX_FLAGS
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_subdirectory(nrf_sdk)
 
-include_directories(SYSTEM ${NRF_INCS})
+add_custom_target(
+  configure_cmsis
+  COMMAND
+    ${Java} -jar
+    ${PROJECT_SOURCE_DIR}/nrf_sdk/sdk/external_tools/cmsisconfig/CMSIS_Configuration_Wizard.jar
+    ${PROJECT_SOURCE_DIR}/src/sdk_config.h)
 
-add_executable(
-  ${PROJECT_NAME}_${BOARD_NAME}.elf
-  ${NRF_SRCS}
-  src/firmware_main.cpp
-  src/power_module.cpp
-  src/misc_module.cpp
-  src/adc_module.cpp
-  src/ble/advertising_module.cpp
-  src/ble/bms_module.cpp
-  src/ble/bas_module.cpp
-  src/ble/timetable_service_module.cpp
-  src/ble/qwr_module.cpp
-  src/ble/pm_module.cpp
-  src/ble/connection_module.cpp
-  src/ble/gap_module.cpp
-  src/ble/gatt_module.cpp
-  src/ble/ble_module.cpp)
-target_link_libraries(${PROJECT_NAME}_${BOARD_NAME}.elf)
-target_include_directories(
-  ${PROJECT_NAME}_${BOARD_NAME}.elf PUBLIC src/sdk_config src/ble
-                                           src/sdk_config/${BOARD_NAME} src)
-target_link_options(${PROJECT_NAME}_${BOARD_NAME}.elf PUBLIC
-                    -T${CMAKE_SOURCE_DIR}/gcc_nrf52840.ld)
+add_custom_target(erase_all COMMAND ${Nrfjprog} -f nrf52 --eraseall)
+
+add_custom_target(
+  flash_softdevice
+  COMMAND ${Nrfjprog} -f nrf52 --program s140_nrf52_7.0.1_softdevice.hex
+          --sectorerase
+  COMMAND ${Nrfjprog} -f nrf52 --reset)
+
+include_directories(SYSTEM ${NRF_INCS})
+include_directories(src src/sdk_config src/ble)
+
+function(firmware_executable_template board_name)
+  set(firmware_executable_base_name ${PROJECT_NAME}_${board_name})
+  set(firmware_executable ${firmware_executable_base_name}.elf)
+  set(src_files
+      ${NRF_SRCS}
+      src/firmware_main.cpp
+      src/power_module.cpp
+      src/misc_module.cpp
+      src/adc_module.cpp
+      src/ble/advertising_module.cpp
+      src/ble/bms_module.cpp
+      src/ble/bas_module.cpp
+      src/ble/timetable_service_module.cpp
+      src/ble/qwr_module.cpp
+      src/ble/pm_module.cpp
+      src/ble/connection_module.cpp
+      src/ble/gap_module.cpp
+      src/ble/gatt_module.cpp
+      src/ble/ble_module.cpp)
+  add_executable(${firmware_executable} ${src_files})
+
+  string(TOUPPER ${board_name} board_name_uppercase)
+  target_compile_options(${firmware_executable}
+                         PUBLIC -DBOARD_${board_name_uppercase})
+  target_include_directories(${firmware_executable}
+                             PUBLIC src/sdk_config/${board_name})
+  target_link_options(${firmware_executable} PUBLIC
+                      -T${CMAKE_SOURCE_DIR}/gcc_nrf52840.ld)
+
+  add_custom_target(
+    flash_${board_name}
+    COMMAND ${PROJECT_SOURCE_DIR}/flash_program.sh ${board_name}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS ${firmware_executable})
+
+endfunction()
+
+firmware_executable_template(pca10056)
+firmware_executable_template(pca10059)

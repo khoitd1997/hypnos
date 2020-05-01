@@ -1,8 +1,9 @@
 #!/bin/bash
-set -e
-curr_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+# script used for flashing various board types
 
-cd ${curr_dir}/build/$1
+set -e
+
+arm-none-eabi-objcopy -O ihex hypnos_$1.elf hypnos_$1.hex # JLink doesn't like elf file
 
 if [ "$1" = "pca10056" ]; then
     nrfjprog -f nrf52 --program hypnos_pca10056.hex --sectorerase --verify
