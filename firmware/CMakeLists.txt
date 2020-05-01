@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.14)
 project(hypnos C CXX ASM)
 
-find_program(nrfjprog Nrfjprog)
-find_program(java Java)
+find_program(nrfjprog_exe NAMES nrfjprog)
+find_program(nrfutil_exe NAMES nrfutil) # used in flash_program.sh
+find_program(java_exe NAMES java)
 
 set(common_flags "-D__HEAP_SIZE=8192 -D__STACK_SIZE=8192 -DDEBUG")
 set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${common_flags}")
@@ -17,17 +18,17 @@ add_subdirectory(nrf_sdk)
 add_custom_target(
   configure_cmsis
   COMMAND
-    ${Java} -jar
+    ${java_exe} -jar
     ${PROJECT_SOURCE_DIR}/nrf_sdk/sdk/external_tools/cmsisconfig/CMSIS_Configuration_Wizard.jar
     ${PROJECT_SOURCE_DIR}/src/sdk_config.h)
 
-add_custom_target(erase_all COMMAND ${Nrfjprog} -f nrf52 --eraseall)
+add_custom_target(erase_all COMMAND ${nrfjprog_exe} -f nrf52 --eraseall)
 
 add_custom_target(
   flash_softdevice
-  COMMAND ${Nrfjprog} -f nrf52 --program s140_nrf52_7.0.1_softdevice.hex
+  COMMAND ${nrfjprog_exe} -f nrf52 --program s140_nrf52_7.0.1_softdevice.hex
           --sectorerase
-  COMMAND ${Nrfjprog} -f nrf52 --reset)
+  COMMAND ${nrfjprog_exe} -f nrf52 --reset)
 
 include_directories(SYSTEM ${NRF_INCS})
 include_directories(src src/sdk_config src/ble)
