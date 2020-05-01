@@ -1,8 +1,29 @@
 # Hypnos Firmware
 
-## Tools
+## Dependencies
 
 Make sure ```nRF Command Line Tools```, ```JLink Driver``` and ```nrfutil```(pip) are installed
+
+## How to build
+
+The project uses ```CMake``` as the build system. But first, you need to generate cmake files for the nrf52 sdk since they originally supported only makefiles, then you can build various targets that do things from building the firmware to flashing the board.
+
+```shell
+# assuming working directory is the project root
+
+# generate cmake files for sdk
+# shouldn't needed to be run too often
+# there will be some warnings but that's okay
+./generate_cmake_file_for_sdk.sh
+
+mkdir -p build
+cd build
+
+cmake .. -DCMAKE_TOOLCHAIN_FILE=../nrf_sdk/toolchain.cmake
+cmake --build . --target flash_pca10056 # build and flash pca10056 firmware
+```
+
+A faster way than using the commandline cmake is to use the vscode CMake extension, the project already contains a file describing the cmake ```nrf52 kit``` to be used for building, so select that kit during configuration and you should be good.
 
 ## Power Consumption Data
 
