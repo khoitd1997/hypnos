@@ -28,7 +28,7 @@ A faster way than using the commandline cmake is to use the vscode CMake extensi
 
 ## How to build the tests
 
-The project uses ```doctest``` as its unit test framework to test files that are not hard-depdendent. To build:
+The project uses ```doctest``` as its unit test framework to test files that are not hardware-depdendent. The test cases themselves are included in the source files of the code being tested themselves. To build:
 
 ```shell
 # assuming working directory is the project root
