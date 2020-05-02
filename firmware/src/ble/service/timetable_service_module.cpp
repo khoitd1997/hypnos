@@ -14,7 +14,7 @@
 
 #include "sdk_common.h"
 
-#include "exception_list.hpp"
+#include "time_exception_list.hpp"
 
 // clang-format off
 #define TIMETABLE_SERVICE_DEF(_name)                          \
@@ -49,7 +49,7 @@ namespace ble::timetable_service {
     constexpr uint16_t TIMETABLE_MORNING_CURFEW_CHARACTERISTIC_UUID    = 0x1401;
     constexpr uint16_t TIMETABLE_ACTIVE_EXCEPTIONS_CHARACTERISTIC_UUID = 0x1405;
 
-    ExceptionList m_active_exceptions;
+    TimeExceptionList m_active_exceptions;
 
     void timetable_service_ble_event_handler(ble_evt_t const *p_ble_evt, void *p_context) {
       NRF_LOG_INFO("timetable service event received. Event type = %d", p_ble_evt->header.evt_id);
@@ -144,7 +144,7 @@ namespace ble::timetable_service {
       const ble_gatts_attr_t attr_char_value{
           .p_uuid    = &ble_uuid,
           .p_attr_md = &attr_md,
-          .init_len  = 0,  // TODO(khoi): Make sure this is variable
+          .init_len  = 0,
           .init_offs = 0,
           .max_len   = m_active_exceptions.max_size_in_bytes(),
       };
@@ -173,8 +173,8 @@ namespace ble::timetable_service {
   void value_update() {
     NRF_LOG_INFO("updating timetable service value");
 
-    m_active_exceptions.push(5, 10);
-    m_active_exceptions.push(11, 15);
+    m_active_exceptions.push({5, 10});
+    m_active_exceptions.push({11, 15});
 
     ble_gatts_value_t gatts_value{
         .len     = m_active_exceptions.size_in_bytes(),

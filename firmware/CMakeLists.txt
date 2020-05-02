@@ -8,7 +8,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${platform_indepdendent_c_and_cpp_flags}")
 set(CMAKE_CXX_FLAGS
     "${CMAKE_CXX_FLAGS} ${platform_indepdendent_c_and_cpp_flags} -std=c++17")
 
-set(platform_indepdendent_srcs src/ble/service/exception_list.cpp)
+set(platform_indepdendent_srcs src/ble/service/time_exception_list.cpp)
 
 include_directories(test)
 
@@ -101,7 +101,6 @@ else()
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         DEPENDS ${firmware_executable})
     endif()
-
   endfunction()
 
   firmware_executable_template(pca10056 TRUE)
