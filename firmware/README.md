@@ -4,7 +4,7 @@
 
 Make sure ```nRF Command Line Tools```, ```JLink Driver``` and ```nrfutil```(pip) are installed
 
-## How to build
+## How to build the firmware
 
 The project uses ```CMake``` as the build system. But first, you need to generate cmake files for the nrf52 sdk since they originally supported only makefiles, then you can build various targets that do things from building the firmware to flashing the board.
 
@@ -18,12 +18,28 @@ The project uses ```CMake``` as the build system. But first, you need to generat
 
 mkdir -p build
 cd build
+rm -rf ./* # if previous build was for the tests, reset the state
 
 cmake .. -DCMAKE_TOOLCHAIN_FILE=../nrf_sdk/toolchain.cmake
 cmake --build . --target flash_pca10056 # build and flash pca10056 firmware
 ```
 
 A faster way than using the commandline cmake is to use the vscode CMake extension, the project already contains a file describing the cmake ```nrf52 kit``` to be used for building, so select that kit during configuration and you should be good.
+
+## How to build the tests
+
+The project uses ```doctest``` as its unit test framework to test files that are not hard-depdendent. To build:
+
+```shell
+# assuming working directory is the project root
+
+mkdir -p build
+cd build
+rm -rf ./* # if previous build was for the firmware, reset the state
+
+cmake ..
+cmake --build . # build and run all tests by default
+```
 
 ## Power Consumption Data
 
