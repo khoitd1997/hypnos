@@ -20,7 +20,9 @@
         "istream": "cpp",
         "functional": "cpp",
         "tuple": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "string_view": "cpp",
+        "initializer_list": "cpp"
     },
     "cmake.configureOnOpen": true
 }
