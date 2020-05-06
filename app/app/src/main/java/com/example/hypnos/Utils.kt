@@ -11,8 +11,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.hypnos.ble_service.BleService
 import com.google.android.material.snackbar.Snackbar
-import com.polidea.rxandroidble2.RxBleConnection
-import com.polidea.rxandroidble2.RxBleDevice
 
 private const val PERMISSION_REQUEST_CODE = 5
 private val permissions =
@@ -35,9 +33,6 @@ internal fun Activity.requestPermission() =
         permissions,
         PERMISSION_REQUEST_CODE
     )
-
-internal val RxBleDevice.isConnected: Boolean
-    get() = connectionState == RxBleConnection.RxBleConnectionState.CONNECTED
 
 internal fun Activity.showSnackbarShort(text: CharSequence) {
     Snackbar.make(findViewById(android.R.id.content), text, Snackbar.LENGTH_SHORT).show()
