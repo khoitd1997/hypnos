@@ -5,7 +5,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.polidea.rxandroidble2.scan.ScanResult
 
 class ScanResultsAdapter(
     private val onClickListener: (ScanResult) -> Unit
@@ -31,7 +30,7 @@ class ScanResultsAdapter(
                 // new device => add to data list
                 with(data) {
                     add(bleScanResult)
-                    sortBy { it.bleDevice.macAddress }
+                    sortBy { it.bleDevice.address }
                 }
                 notifyDataSetChanged()
             }
@@ -46,8 +45,9 @@ class ScanResultsAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         with(data[position]) {
-            holder.device.text = String.format("%s (%s)", bleDevice.macAddress, bleDevice.name)
-            holder.rssi.text = String.format("RSSI: %d", rssi)
+            val name = if(bleDevice.name == null) "null" else bleDevice.name
+            holder.device.text = String.format(name)
+            holder.rssi.text = String.format(bleDevice.address)
             holder.itemView.setOnClickListener { onClickListener(this) }
         }
     }

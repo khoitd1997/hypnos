@@ -9,27 +9,22 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
-import com.example.hypnos.BleService
+import com.example.hypnos.ble_service.BleService
 import com.example.hypnos.R
 import com.example.hypnos.isPermissionGranted
-import com.example.hypnos.requestPermission
 import kotlinx.android.synthetic.main.fragment_home.*
 
 class HomeFragment : Fragment() {
-
     private lateinit var homeViewModel: HomeViewModel
 
     private val resultsAdapter =
         ScanResultsAdapter {
             sendMsg(
                 BleService.Companion.BleIpcCmd.CONNECT_DEVICE,
-                BleService.Companion.ConnectInfo(it.bleDevice.macAddress)
+                BleService.Companion.ConnectInfo(it.bleDevice)
             )
-            Log.v("handler", "user clicked on ${it.bleDevice.macAddress}")
+            Log.v("handler", "user clicked on ${it.bleDevice.address}")
         }
 
     override fun onCreateView(
@@ -88,11 +83,11 @@ class HomeFragment : Fragment() {
         sendMsg(BleService.Companion.BleIpcCmd.DEINIT, null)
     }
 
-    private var mService: Messenger? = null
+    private var serviceMessenger: Messenger? = null
     private var bound: Boolean = false
     private val mConnection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
-            mService = Messenger(service)
+            serviceMessenger = Messenger(service)
             bound = true
             sendMsg(
                 BleService.Companion.BleIpcCmd.INIT,
@@ -102,7 +97,7 @@ class HomeFragment : Fragment() {
         }
 
         override fun onServiceDisconnected(className: ComponentName) {
-            mService = null
+            serviceMessenger = null
             bound = false
         }
     }
@@ -111,7 +106,7 @@ class HomeFragment : Fragment() {
         if (bound) {
             val msg: Message = Message.obtain(null, what.ordinal, obj)
             try {
-                mService?.send(msg)
+                serviceMessenger?.send(msg)
             } catch (e: RemoteException) {
                 e.printStackTrace()
             }

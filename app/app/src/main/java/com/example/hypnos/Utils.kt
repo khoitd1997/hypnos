@@ -9,6 +9,7 @@ import android.util.Log
 import androidx.annotation.StringRes
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.example.hypnos.ble_service.BleService
 import com.google.android.material.snackbar.Snackbar
 import com.polidea.rxandroidble2.RxBleConnection
 import com.polidea.rxandroidble2.RxBleDevice
