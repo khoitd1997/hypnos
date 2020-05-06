@@ -87,7 +87,7 @@ bool TimeExceptionList::replace(const uint8_t *buf, const size_t len) {
     const auto total_exception = len / sizeof(TimeException);
     auto       time_pt         = (const TimeException *)(buf);
 
-    auto counter = 0;
+    size_t counter = 0;
     while (counter != total_exception) {
       push({time_pt->start_time, time_pt->end_time});
 

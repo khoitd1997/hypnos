@@ -34,8 +34,6 @@ The custom service is called the ```Timetable Service```. ```Base and other UUID
 
 ```c
 // base is f364adc9-b000-4042-ba50-05ca45bf8abc
-#define UUID_BASE         {0xBC, 0x8A, 0xBF, 0x45, 0xCA, 0x05, 0x50, 0xBA, \
-                                          0x40, 0x42, 0xB0, 0x00, 0xC9, 0xAD, 0x64, 0xF3}
 #define UUID_SERVICE 0x1400
 ```
 
