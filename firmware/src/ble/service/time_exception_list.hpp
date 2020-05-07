@@ -2,15 +2,18 @@
 #define _TIME_EXCEPTION_LIST_HPP
 
 #include <cstdint>
-#include <ctime>
 
 #include <array>
 
 #include "ble_custom_characteristic_value_type.hpp"
 
+// NOTE: If you are maintaing it in year 2038, need to change this to 64 bits
+// time_t is 64 bits, that's way too many bits
+typedef uint32_t epoch_time_t;
+
 struct TimeException {
-  time_t start_time;
-  time_t end_time;
+  epoch_time_t start_time;
+  epoch_time_t end_time;
 };
 
 class TimeExceptionList : public BleCustomCharacteristicValueType {
