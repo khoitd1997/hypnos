@@ -226,8 +226,8 @@ namespace ble::timetable_service {
     m_timetable.morning_curfew_characteristic.sync_local_to_ble_stack();
 
     m_timetable.active_exceptions_characteristic.init();
-    m_timetable.active_exceptions_characteristic.value.push({5, 10});
-    m_timetable.active_exceptions_characteristic.value.push({11, 15});
+    m_timetable.active_exceptions_characteristic.value.push({866450344, 902749805});
+    m_timetable.active_exceptions_characteristic.value.push({1015322584, 1537641659});
     m_timetable.active_exceptions_characteristic.sync_local_to_ble_stack();
   }
 }  // namespace ble::timetable_service

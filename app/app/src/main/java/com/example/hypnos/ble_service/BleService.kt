@@ -13,6 +13,11 @@ import android.util.Log
 import android.widget.Toast
 import com.example.hypnos.ui.home.ScanResult
 import com.example.hypnos.ui.home.ScanResultsAdapter
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import java.nio.Buffer
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -35,15 +40,86 @@ class BleService : Service() {
             TEST
         }
 
-        private val BATTERY_LEVEL_UUID: UUID =
-            UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb")
-
         data class InitInfo(val scanAdapter: ScanResultsAdapter)
         data class ConnectInfo(val device: BluetoothDevice)
         data class DisconnectInfo(val unbond: Boolean)
+
+        private val BATTERY_LEVEL_CHARACTERISTIC_UUID =
+            UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb")
+
+        private fun getCharacteristicUuidFromServiceUuid(
+            service_uuid: String,
+            characteristicShortUUID: String
+        ): UUID = UUID.fromString(service_uuid.replaceRange(4, 8, characteristicShortUUID))
+
+        private val TIMETABLE_SERVICE_UUID = "f3641400-b000-4042-ba50-05ca45bf8abc"
+        private val MORNING_CURFEW_CHARACTERISTIC_UUID =
+            getCharacteristicUuidFromServiceUuid(TIMETABLE_SERVICE_UUID, "1401")
+        private val ACTIVE_EXCEPTIONS_CHARACTERISTIC_UUID =
+            getCharacteristicUuidFromServiceUuid(TIMETABLE_SERVICE_UUID, "1405")
+
+        const val BLE_SERVICE_LOG_TAG = "ble"
     }
 
     private lateinit var sharedPreferences: SharedPreferences
+
+    // using Long because Kotlin only has experimental support for unsigned
+    data class TimeException(val startTimeEpoch: Long, val endTimeEpoch: Long) {}
+    class TimeExceptionList() {
+        private val timeExceptions = mutableListOf<TimeException>()
+        private val timeExceptionsType = object : TypeToken<List<TimeException>>() {}.type
+
+        fun replace(rawValues: ByteArray) {
+            val buf =
+                ByteBuffer.wrap(rawValues).order(ByteOrder.LITTLE_ENDIAN).asIntBuffer()
+            val temp = IntArray(buf.remaining())
+            buf.get(temp)
+            assert(temp.size % 2 == 0)
+
+            timeExceptions.clear()
+
+            val iterator = temp.iterator()
+            while (iterator.hasNext()) {
+                val start = iterator.next().toLong()
+                val stop = iterator.next().toLong()
+                timeExceptions.add(TimeException(start, stop))
+            }
+        }
+
+        fun replace(jsonString: String) {
+            timeExceptions.clear()
+            timeExceptions.addAll(
+                Gson().fromJson<List<TimeException>>(
+                    jsonString,
+                    timeExceptionsType
+                )
+            )
+        }
+
+        fun toJson(): String {
+            return Gson().toJson(timeExceptions)
+        }
+
+        fun get(): List<TimeException> {
+            return timeExceptions
+        }
+
+        fun getDates(): List<Pair<Date, Date>> {
+            val ret = mutableListOf<Pair<Date, Date>>()
+            for (e in timeExceptions) {
+                ret.add(
+                    Pair<Date, Date>(
+                        Date(e.startTimeEpoch * 1000),
+                        Date(e.endTimeEpoch * 1000)
+                    )
+                )
+            }
+
+            return ret
+        }
+    }
+
+    private val timeExceptionList = TimeExceptionList()
 
     private lateinit var ipcMessenger: Messenger
     internal var scanResultsAdapter: ScanResultsAdapter? = null
@@ -120,7 +196,7 @@ class BleService : Service() {
     override fun onDestroy() {
         super.onDestroy()
 
-        Log.d("ble", "service being destroyed")
+        Log.d(BLE_SERVICE_LOG_TAG, "service being destroyed")
 
         disconnectDevice(false)
 
@@ -140,9 +216,9 @@ class BleService : Service() {
 
             with(parentContext) {
                 result?.let {
-                    var device = result.device
-                    var rssi = result.rssi
-                    Log.d("ble", "found device: $device")
+                    val device = result.device
+                    val rssi = result.rssi
+                    Log.d(BLE_SERVICE_LOG_TAG, "found device: $device")
                     device?.let {
                         scanResultsAdapter?.addScanResult(ScanResult(it, rssi))
                     }
@@ -153,22 +229,24 @@ class BleService : Service() {
 
     private val bleScannerCallback = BleScannerCallback(this)
 
-    internal class BleGATTCallback() : BluetoothGattCallback() {
+    internal class BleGATTCallback(context: Context) : BluetoothGattCallback() {
+        private var parentContext = context as BleService
+
         override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
             super.onConnectionStateChange(gatt, status, newState)
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
-                    Log.i("ble", "Connected to GATT server.")
+                    Log.i(BLE_SERVICE_LOG_TAG, "Connected to GATT server.")
                     Log.i(
-                        "ble", "Attempting to start service discovery: " +
+                        BLE_SERVICE_LOG_TAG, "Attempting to start service discovery: " +
                                 gatt?.discoverServices()
                     )
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
-                    Log.i("ble", "Disconnected from GATT server.")
+                    Log.i(BLE_SERVICE_LOG_TAG, "Disconnected from GATT server.")
                 }
                 else -> {
-                    Log.i("ble", "gatt state: $newState")
+                    Log.i(BLE_SERVICE_LOG_TAG, "gatt state: $newState")
                 }
             }
         }
@@ -176,15 +254,23 @@ class BleService : Service() {
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
             when (status) {
                 BluetoothGatt.GATT_SUCCESS -> {
-                    Log.w("ble", "service discovery succeeded")
+                    Log.d(BLE_SERVICE_LOG_TAG, "service discovery succeeded")
+                    Log.d(BLE_SERVICE_LOG_TAG, "$MORNING_CURFEW_CHARACTERISTIC_UUID")
 
                     for (service in gatt.services) {
                         for (characteristic in service.characteristics) {
-                            if (characteristic.uuid == BATTERY_LEVEL_UUID) {
+                            Log.d(BLE_SERVICE_LOG_TAG, "UUID: ${characteristic.uuid}")
+                            if (characteristic.uuid == BATTERY_LEVEL_CHARACTERISTIC_UUID) {
                                 Log.d(
-                                    "ble",
+                                    BLE_SERVICE_LOG_TAG,
                                     "found battery characteristic: ${characteristic.properties} ${characteristic.permissions}"
                                 )
+//                                gatt.readCharacteristic(characteristic)
+//                                break;
+                            } else if (characteristic.uuid == MORNING_CURFEW_CHARACTERISTIC_UUID) {
+                                Log.d(BLE_SERVICE_LOG_TAG, "found morning curfew")
+                            } else if (characteristic.uuid == ACTIVE_EXCEPTIONS_CHARACTERISTIC_UUID) {
+                                Log.d(BLE_SERVICE_LOG_TAG, "found active exceptions")
                                 gatt.readCharacteristic(characteristic)
                                 break;
                             }
@@ -198,10 +284,9 @@ class BleService : Service() {
 //                        )
 //                    )
                 }
-                else -> Log.w("ble", "onServicesDiscovered received: $status")
+                else -> Log.w(BLE_SERVICE_LOG_TAG, "onServicesDiscovered received: $status")
             }
         }
-
 
         override fun onCharacteristicRead(
             gatt: BluetoothGatt?,
@@ -211,16 +296,25 @@ class BleService : Service() {
             super.onCharacteristicRead(gatt, characteristic, status)
             when (status) {
                 BluetoothGatt.GATT_SUCCESS -> {
-                    Log.d("ble", "gatt success: ${characteristic?.value?.get(0)}")
+                    characteristic?.value?.let { values ->
+                        with(parentContext) {
+                            timeExceptionList.replace(values)
+
+                            Log.d(
+                                BLE_SERVICE_LOG_TAG,
+                                "gatt success: ${timeExceptionList.getDates()}"
+                            )
+                        }
+                    }
                 }
                 else -> {
-                    Log.d("ble", "gatt read failed: $status")
+                    Log.d(BLE_SERVICE_LOG_TAG, "gatt read failed: $status")
                 }
             }
         }
     }
 
-    private val bleGATTCallback = BleGATTCallback()
+    private val bleGATTCallback = BleGATTCallback(this)
 
 
     internal class IpcCommandHandler(
@@ -242,7 +336,7 @@ class BleService : Service() {
 
                     BleIpcCmd.START_SCAN -> {
                         Log.d(
-                            "ble",
+                            BLE_SERVICE_LOG_TAG,
                             "extended advertising: ${bluetoothAdapter.isLeExtendedAdvertisingSupported}"
                         )
                         startScan()
@@ -256,7 +350,7 @@ class BleService : Service() {
                         scanResultsAdapter?.clearScanResults()
                         stopScan()
                         val connectInfo = receivedObj as ConnectInfo
-                        Log.d("ble", "received connect device cmd")
+                        Log.d(BLE_SERVICE_LOG_TAG, "received connect device cmd")
                         connectDevice(connectInfo.device)
                     }
 
@@ -298,7 +392,7 @@ class BleService : Service() {
     }
 
     private fun connectDevice(device: BluetoothDevice? = this.bleDevice) {
-//        Log.d("ble", "trying to connect device $macAddr")
+//        Log.d(BLE_SERVICE_LOG_TAG, "trying to connect device $macAddr")
         device?.connectGatt(this, false, bleGATTCallback)
 
     }
@@ -317,7 +411,7 @@ class BleService : Service() {
     }
 
     private fun disconnectDevice(unbond: Boolean) {
-        Log.d("ble", "disconnect func called")
+        Log.d(BLE_SERVICE_LOG_TAG, "disconnect func called")
         if (unbond) {
             unbondDevice()
         }
