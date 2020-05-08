@@ -153,9 +153,17 @@ namespace ble::timetable_service {
 #define TIMETABLE_SERVICE_UUID_BASE \
   { 0xBC, 0x8A, 0xBF, 0x45, 0xCA, 0x05, 0x50, 0xBA, 0x42, 0x40, 0x00, 0xB0, 0xC9, 0xAD, 0x64, 0xF3 }
 
-    constexpr uint16_t TIMETABLE_SERVICE_UUID                          = 0x1400;
-    constexpr uint16_t TIMETABLE_MORNING_CURFEW_CHARACTERISTIC_UUID    = 0x1401;
+    constexpr uint16_t TIMETABLE_SERVICE_UUID = 0x1400;
+
+    constexpr uint16_t TIMETABLE_MORNING_CURFEW_CHARACTERISTIC_UUID = 0x1401;
+    constexpr uint16_t TIMETABLE_NIGHT_CURFEW_CHARACTERISTIC_UUID   = 0x1402;
+
+    constexpr uint16_t TIMETABLE_WORK_DURATION_MINUTE_CHARACTERISTIC_UUID  = 0x1403;
+    constexpr uint16_t TIMETABLE_BREAK_DURATION_MINUTE_CHARACTERISTIC_UUID = 0x1404;
+
     constexpr uint16_t TIMETABLE_ACTIVE_EXCEPTIONS_CHARACTERISTIC_UUID = 0x1405;
+
+    constexpr uint16_t TIMETABLE_TOKENS_LEFT_CHARACTERISTIC_UUID = 0x1406;
 
     struct timetable_service_t {
       uint16_t service_handle;

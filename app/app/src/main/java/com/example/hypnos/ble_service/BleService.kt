@@ -55,8 +55,16 @@ class BleService : Service() {
         private val TIMETABLE_SERVICE_UUID = "f3641400-b000-4042-ba50-05ca45bf8abc"
         private val MORNING_CURFEW_CHARACTERISTIC_UUID =
             getCharacteristicUuidFromServiceUuid(TIMETABLE_SERVICE_UUID, "1401")
+        private val NIGHT_CURFEW_CHARACTERISTIC_UUID =
+            getCharacteristicUuidFromServiceUuid(TIMETABLE_SERVICE_UUID, "1402")
+        private val WORK_DURATION_MINUTE_CHARACTERISTIC_UUID =
+            getCharacteristicUuidFromServiceUuid(TIMETABLE_SERVICE_UUID, "1403")
+        private val BREAK_DURATION_MINUTE_CHARACTERISTIC_UUID =
+            getCharacteristicUuidFromServiceUuid(TIMETABLE_SERVICE_UUID, "1404")
         private val ACTIVE_EXCEPTIONS_CHARACTERISTIC_UUID =
             getCharacteristicUuidFromServiceUuid(TIMETABLE_SERVICE_UUID, "1405")
+        private val TOKENS_LEFT_CHARACTERISTIC_UUID =
+            getCharacteristicUuidFromServiceUuid(TIMETABLE_SERVICE_UUID, "1406")
 
         const val BLE_SERVICE_LOG_TAG = "ble"
     }
@@ -299,7 +307,6 @@ class BleService : Service() {
                     characteristic?.value?.let { values ->
                         with(parentContext) {
                             timeExceptionList.replace(values)
-
                             Log.d(
                                 BLE_SERVICE_LOG_TAG,
                                 "gatt success: ${timeExceptionList.getDates()}"
