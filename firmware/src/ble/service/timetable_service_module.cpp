@@ -15,7 +15,7 @@
 
 #include "sdk_common.h"
 
-#include "ble_custom_characteristic_value_type.hpp"
+#include "ble_characteristic.hpp"
 #include "time_exception_list.hpp"
 
 // clang-format off
@@ -30,122 +30,6 @@
 namespace ble::timetable_service {
   namespace {
     typedef uint16_t time_hour_minute_t;
-
-    template <typename T,
-              uint16_t characteristic_uuid,
-              bool     variable_length,
-              bool     is_custom = std::is_base_of_v<BleCustomCharacteristicValueType, T>,
-              std::enable_if_t<std::is_arithmetic_v<T> || is_custom, int> = 0>
-    class BleCharacteristic {
-     private:
-      const uint16_t &_service_handle;
-      const uint16_t &_conn_handle;
-      const uint8_t & _uuid_type;
-
-      void _update_ble_stack_value(uint8_t *buf, const uint16_t len) {
-        ble_gatts_value_t gatts_value{
-            .len     = len,
-            .offset  = 0,
-            .p_value = buf,
-        };
-        const auto err_code =
-            sd_ble_gatts_value_set(_conn_handle, characteristc_handles.value_handle, &gatts_value);
-        APP_ERROR_CHECK(err_code);
-      }
-
-      void _get_ble_stack_value(uint8_t *buf, uint16_t &len) {
-        ble_gatts_value_t gatts_value{
-            .len     = 0,
-            .offset  = 0,
-            .p_value = buf,
-        };
-        const auto err_code =
-            sd_ble_gatts_value_get(_conn_handle, characteristc_handles.value_handle, &gatts_value);
-        APP_ERROR_CHECK(err_code);
-        len = gatts_value.len;
-      }
-
-      uint16_t _get_max_size_in_bytes() const {
-        if constexpr (std::is_arithmetic_v<T>) {
-          return sizeof(T);
-        } else if constexpr (is_custom) {
-          return value.max_size_in_bytes();
-        }
-      }
-
-      uint16_t _get_size_in_bytes() const {
-        if constexpr (std::is_arithmetic_v<T>) {
-          return _get_max_size_in_bytes();
-        } else if constexpr (is_custom) {
-          return value.size_in_bytes();
-        }
-      }
-
-     public:
-      T                        value;
-      ble_gatts_char_handles_t characteristc_handles;
-
-      BleCharacteristic(const uint16_t &service_handle,
-                        const uint16_t &conn_handle,
-                        const uint8_t & uuid_type)
-          : _service_handle{service_handle}, _conn_handle{conn_handle}, _uuid_type{uuid_type} {}
-
-      void init() {
-        const ble_gatts_char_md_t char_md{.char_props{
-            .read  = 1,
-            .write = 1,
-        }};
-
-        ble_gatts_attr_md_t attr_md{
-            .vlen = (variable_length ? static_cast<uint8_t>(1) : static_cast<uint8_t>(0)),
-            .vloc = BLE_GATTS_VLOC_STACK,
-        };
-        BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
-        BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.write_perm);
-
-        const ble_uuid_t ble_uuid{
-            .uuid = characteristic_uuid,
-            .type = _uuid_type,
-        };
-        const ble_gatts_attr_t attr_char_value{
-            .p_uuid    = &ble_uuid,
-            .p_attr_md = &attr_md,
-            .init_len  = 0,
-            .init_offs = 0,
-            .max_len   = _get_max_size_in_bytes(),
-        };
-
-        const auto err_code = sd_ble_gatts_characteristic_add(
-            _service_handle, &char_md, &attr_char_value, &characteristc_handles);
-        APP_ERROR_CHECK(err_code);
-      }
-
-      void sync_local_to_ble_stack() {
-        uint8_t *  buf = nullptr;
-        const auto len = _get_size_in_bytes();
-
-        if constexpr (std::is_arithmetic_v<T>) {
-          buf = (uint8_t *)(&value);
-        } else if constexpr (is_custom) {
-          buf = value.data();
-        }
-
-        _update_ble_stack_value(buf, len);
-      }
-
-      void sync_ble_stack_to_local() {
-        uint8_t    buf[_get_max_size_in_bytes()] = {0};
-        const auto len                           = _get_max_size_in_bytes();
-
-        _get_ble_stack_value(buf, len);
-
-        if constexpr (std::is_arithmetic_v<T>) {
-          value = *((T *)(buf));
-        } else if constexpr (is_custom) {
-          value.replace(buf, len);
-        }
-      }
-    };
 
     void timetable_service_ble_event_handler(ble_evt_t const *p_ble_evt, void *p_context);
 

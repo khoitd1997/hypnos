@@ -22,6 +22,8 @@
 #include "bms_module.hpp"
 #include "qwr_module.hpp"
 
+#include "timetable_service_module.hpp"
+
 namespace ble {
   namespace {
     constexpr auto BLE_OBSERVER_PRIORITY =
@@ -57,7 +59,6 @@ namespace ble {
           NRF_LOG_INFO("Disconnected");
           pm::delete_disconnected_bonds();
           connection::set_handle(BLE_CONN_HANDLE_INVALID);
-          APP_ERROR_CHECK(err_code);
           break;
 
         case BLE_GATTC_EVT_TIMEOUT:

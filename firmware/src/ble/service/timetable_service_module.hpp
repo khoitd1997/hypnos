@@ -1,4 +1,4 @@
-#include <stdint.h>
+#include <cstdint>
 
 #ifndef _TIMETABLE_SERVICE_MODULE
 #define _TIMETABLE_SERVICE_MODULE
