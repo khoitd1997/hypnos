@@ -54,7 +54,10 @@ else()
             ${PROJECT_SOURCE_DIR}/s140_nrf52_7.0.1_softdevice.hex --sectorerase
     COMMAND ${nrfjprog_exe} -f nrf52 --reset)
 
-  include_directories(SYSTEM ${NRF_INCS})
+  set(system_view_incs src/system_view/Config/ src/system_view/SEGGER/)
+  set(system_view_srcs src/system_view/Config/SEGGER_SYSVIEW_Config_NoOS.c src/system_view/SEGGER/SEGGER_SYSVIEW.c)
+
+  include_directories(SYSTEM ${NRF_INCS} ${system_view_incs})
   include_directories(src src/sdk_config src/ble src/ble/service/)
 
   function(firmware_executable_template board_name include_in_all)
@@ -62,6 +65,7 @@ else()
     set(firmware_executable ${firmware_executable_base_name}.elf)
     set(src_files
         ${NRF_SRCS}
+        ${system_view_srcs}
         ${platform_indepdendent_srcs}
         src/firmware_main.cpp
         src/power_module.cpp
