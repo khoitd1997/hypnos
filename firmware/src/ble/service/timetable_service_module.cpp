@@ -29,8 +29,6 @@
 
 namespace ble::timetable_service {
   namespace {
-    typedef uint16_t time_hour_minute_t;
-
     void timetable_service_ble_event_handler(ble_evt_t const *p_ble_evt, void *p_context);
 
 // f364adc9-b000-4042-ba50-05ca45bf8abc
@@ -55,10 +53,31 @@ namespace ble::timetable_service {
       uint16_t conn_handle;
       uint8_t  uuid_type;
 
-      BleCharacteristic<time_hour_minute_t, TIMETABLE_MORNING_CURFEW_CHARACTERISTIC_UUID, false>
-          morning_curfew_characteristic{service_handle, conn_handle, uuid_type};
-      BleCharacteristic<TimeExceptionList, TIMETABLE_ACTIVE_EXCEPTIONS_CHARACTERISTIC_UUID, true>
-          active_exceptions_characteristic{service_handle, conn_handle, uuid_type};
+      BleCharacteristic<time_hour_minute_t> morning_curfew_characteristic{
+          service_handle, conn_handle, uuid_type, TIMETABLE_MORNING_CURFEW_CHARACTERISTIC_UUID};
+      BleCharacteristic<time_hour_minute_t> night_curfew_characteristic{
+          service_handle, conn_handle, uuid_type, TIMETABLE_NIGHT_CURFEW_CHARACTERISTIC_UUID};
+
+      BleCharacteristic<uint8_t> work_duration_characteristic{
+          service_handle,
+          conn_handle,
+          uuid_type,
+          TIMETABLE_WORK_DURATION_MINUTE_CHARACTERISTIC_UUID};
+      BleCharacteristic<uint8_t> break_duration_characteristic{
+          service_handle,
+          conn_handle,
+          uuid_type,
+          TIMETABLE_BREAK_DURATION_MINUTE_CHARACTERISTIC_UUID};
+
+      BleCharacteristic<TimeExceptionList> active_exceptions_characteristic{
+          service_handle,
+          conn_handle,
+          uuid_type,
+          TIMETABLE_ACTIVE_EXCEPTIONS_CHARACTERISTIC_UUID,
+          true};
+
+      BleCharacteristic<uint8_t> tokens_left_characteristic{
+          service_handle, conn_handle, uuid_type, TIMETABLE_TOKENS_LEFT_CHARACTERISTIC_UUID};
     };
     TIMETABLE_SERVICE_DEF(m_timetable);
 
@@ -98,6 +117,21 @@ namespace ble::timetable_service {
     }
   }  // namespace
 
+  BleCharacteristic<time_hour_minute_t> &morning_curfew_characteristic =
+      m_timetable.morning_curfew_characteristic;
+  BleCharacteristic<time_hour_minute_t> &night_curfew_characteristic =
+      m_timetable.night_curfew_characteristic;
+
+  BleCharacteristic<uint8_t> &work_duration_characteristic =
+      m_timetable.work_duration_characteristic;
+  BleCharacteristic<uint8_t> &break_duration_characteristic =
+      m_timetable.break_duration_characteristic;
+
+  BleCharacteristic<TimeExceptionList> &active_exceptions_characteristic =
+      m_timetable.active_exceptions_characteristic;
+
+  BleCharacteristic<uint8_t> &tokens_left_characteristic = m_timetable.tokens_left_characteristic;
+
   void init() {
     m_timetable.conn_handle = BLE_CONN_HANDLE_INVALID;
 
@@ -113,13 +147,20 @@ namespace ble::timetable_service {
         BLE_GATTS_SRVC_TYPE_PRIMARY, &ble_uuid, &m_timetable.service_handle);
     APP_ERROR_CHECK(err_code);
 
-    m_timetable.morning_curfew_characteristic.init();
-    m_timetable.morning_curfew_characteristic.value = 5;
-    m_timetable.morning_curfew_characteristic.sync_local_to_ble_stack();
+    morning_curfew_characteristic.init();
+    morning_curfew_characteristic.set(5);
 
-    m_timetable.active_exceptions_characteristic.init();
-    m_timetable.active_exceptions_characteristic.value.push({866450344, 902749805});
-    m_timetable.active_exceptions_characteristic.value.push({1015322584, 1537641659});
-    m_timetable.active_exceptions_characteristic.sync_local_to_ble_stack();
+    night_curfew_characteristic.init();
+
+    work_duration_characteristic.init();
+    break_duration_characteristic.init();
+
+    active_exceptions_characteristic.init();
+    TimeExceptionList exception_list;
+    exception_list.push({866450344, 902749805});
+    exception_list.push({1015322584, 1537641659});
+    active_exceptions_characteristic.set(exception_list);
+
+    tokens_left_characteristic.init();
   }
 }  // namespace ble::timetable_service
