@@ -22,8 +22,6 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 import java.util.*
-import java.util.Calendar.HOUR_OF_DAY
-import java.util.Calendar.JANUARY
 import java.util.concurrent.TimeUnit
 
 
@@ -39,6 +37,7 @@ class BleService : Service() {
             INIT, DEINIT,
             START_SCAN, STOP_SCAN,
             CONNECT_DEVICE, DISCONNECT_DEVICE,
+            CONFIGURE_TIMETABLE,
             TEST
         }
 
@@ -82,8 +81,7 @@ class BleService : Service() {
             var breakDurationMinute: Int = 10,
             var activeExceptions: List<TimeException> = emptyList(),
             var tokensLeft: Int = 100
-        ) {
-        }
+        ) {}
     }
 
     private lateinit var ipcMessenger: Messenger
@@ -124,24 +122,24 @@ class BleService : Service() {
 //            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT)
 //        }
 
-        val testConfig = TimetableConfig(
-            morningCurfew = HourMinuteTime(23, 59),
-            activeExceptions = listOf(
-                TimeException(
-                    GregorianCalendar(2000, 6, 16, 23, 59, 30).time,
-                    GregorianCalendar(2030, JANUARY, 29, 10, 15, 59).time
-                ),
-                TimeException(
-                    GregorianCalendar(1958, 1, 19, 2, 30, 4).time,
-                    GregorianCalendar(1967, 8, 12, 11, 50, 1).time
-                )
-            )
-        )
-        with(sharedPreferences.edit()) {
-            putString(TIME_TABLE_CONFIG_KEY, Gson().toJson(testConfig))
-
-            commit()
-        }
+//        val testConfig = TimetableConfig(
+//            morningCurfew = HourMinuteTime(23, 59),
+//            activeExceptions = listOf(
+//                TimeException(
+//                    GregorianCalendar(2000, 6, 16, 23, 59, 30).time,
+//                    GregorianCalendar(2030, JANUARY, 29, 10, 15, 59).time
+//                ),
+//                TimeException(
+//                    GregorianCalendar(1958, 1, 19, 2, 30, 4).time,
+//                    GregorianCalendar(1967, 8, 12, 11, 50, 1).time
+//                )
+//            )
+//        )
+//        with(sharedPreferences.edit()) {
+//            putString(TIME_TABLE_CONFIG_KEY, Gson().toJson(testConfig))
+//
+//            commit()
+//        }
 
         bleGATTCallback = BleGATTCallback(this)
 
@@ -310,8 +308,6 @@ class BleService : Service() {
                                 var isKnown = true
                                 when (characteristic.uuid) {
                                     MORNING_CURFEW_CHARACTERISTIC_UUID -> {
-                                        assert(timetableConfig.morningCurfew.hourIn24HourFormat == 23)
-                                        assert(timetableConfig.morningCurfew.minute == 59)
                                         characteristic.value =
                                             timetableConfig.morningCurfew.encode()
                                     }
@@ -434,6 +430,14 @@ class BleService : Service() {
                     BleIpcCmd.DISCONNECT_DEVICE -> {
                         val disconnectInfo = receivedObj as DisconnectInfo
                         disconnectDevice(disconnectInfo.unbond)
+                    }
+
+                    BleIpcCmd.CONFIGURE_TIMETABLE -> {
+                        val timetableConfig = receivedObj as TimetableConfig
+                        with(sharedPreferences.edit()) {
+                            putString(TIME_TABLE_CONFIG_KEY, Gson().toJson(timetableConfig))
+                            commit()
+                        }
                     }
 
                     BleIpcCmd.TEST -> {
