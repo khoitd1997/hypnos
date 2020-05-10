@@ -69,6 +69,8 @@ else()
         ${platform_indepdendent_srcs}
         src/firmware_main.cpp
         src/power_module.cpp
+        src/twi_module.cpp
+        src/rv3028.cpp
         src/misc_module.cpp
         src/adc_module.cpp
         src/ble/advertising_module.cpp
