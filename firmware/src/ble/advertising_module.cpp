@@ -16,9 +16,12 @@
 #include "pm_module.hpp"
 #include "power_module.hpp"
 
+#include "timetable_service_module.hpp"
+
 namespace ble::advertising {
   namespace {
-    constexpr auto ADVERTISING_MODE = BLE_ADV_MODE_SLOW;
+    // constexpr auto ADVERTISING_MODE = BLE_ADV_MODE_SLOW;
+    constexpr auto ADVERTISING_MODE = BLE_ADV_MODE_FAST;
 
     //!< advertising interval (in units of 0.625 m
     constexpr uint32_t ADVERTISING_FAST_INTERVAL = 100;
@@ -27,8 +30,8 @@ namespace ble::advertising {
     constexpr uint32_t ADVERTISING_DURATION = 18000;  //!< units of 10 milliseconds.
 
     ble_uuid_t ADVERTISING_UUIDS[] = {
-        {BLE_UUID_BMS_SERVICE, BLE_UUID_TYPE_BLE},
-        {BLE_UUID_BATTERY_SERVICE, BLE_UUID_TYPE_BLE},
+        {BLE_UUID_BMS_SERVICE, BLE_UUID_TYPE_BLE}, {BLE_UUID_BATTERY_SERVICE, BLE_UUID_TYPE_BLE},
+        // {CUSTOM_SERVICE_UUID, BLE_UUID_TYPE_VENDOR_BEGIN},
     };
 
     BLE_ADVERTISING_DEF(m_advertising);
@@ -95,6 +98,10 @@ namespace ble::advertising {
     init.config.ble_adv_slow_enabled  = true;
     init.config.ble_adv_slow_interval = ADVERTISING_SLOW_INTERVAL;
     init.config.ble_adv_slow_timeout  = ADVERTISING_DURATION;
+
+    init.config.ble_adv_extended_enabled = true;
+    init.config.ble_adv_secondary_phy    = BLE_GAP_PHY_2MBPS;
+    init.config.ble_adv_primary_phy      = BLE_GAP_PHY_1MBPS;
 
     init.evt_handler   = advertising_event_handler;
     init.error_handler = advertising_error_handler;

@@ -6,7 +6,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
-<!--    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />-->
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+
+    <!--    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />-->
+<!--    <uses-feature android:name="android.hardware.bluetooth_le" android:required="true"/>-->
 
     <application
         android:allowBackup="true"
@@ -25,7 +28,7 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".BleServiceStarter">
+        <receiver android:name=".ble_service.BleServiceStarter">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="restartservice" />
@@ -33,7 +36,7 @@
         </receiver>
 
         <service
-            android:name=".BleService"
+            android:name=".ble_service.BleService"
             android:enabled="true"
             android:exported="true"
             android:foregroundServiceType="connectedDevice" />

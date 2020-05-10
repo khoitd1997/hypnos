@@ -4,9 +4,10 @@
             "name": "Linux",
             "defines": [],
             "compilerPath": "/usr/bin/arm-none-eabi-gcc",
-            "compileCommands": "build/pca10056/compile_commands.json",
+            "compileCommands": "build/compile_commands.json",
             "cStandard": "c11",
-            "cppStandard": "c++17"
+            "cppStandard": "c++17",
+            "configurationProvider": "vector-of-bool.cmake-tools"
         }
     ],
     "version": 4

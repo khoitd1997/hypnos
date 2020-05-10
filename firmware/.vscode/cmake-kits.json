@@ -1,0 +1,6 @@
+[
+    {
+        "name": "nrf52 kit",
+        "toolchainFile": "${workspaceFolder}/nrf_sdk/toolchain.cmake"
+    }
+]

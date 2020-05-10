@@ -1,7 +1,6 @@
 # assume that this script is called with working directory in this directory
 
-pca10056_toolchain_file := toolchain_pca10056.cmake
-pca10059_toolchain_file := toolchain_pca10059.cmake
+toolchain_file := toolchain.cmake
 output_cmakelist_file 		:= CMakeLists.txt
 
 current_dir := ${CURDIR}
@@ -34,42 +33,42 @@ final_ld_flag_filtered := $(filter-out $(pattern),$(raw_final_ld_flag))
 
 # source: https://stackoverflow.com/questions/39758585/duplicate-compile-flag-in-cmake-cxx-flags
 generate_cmake_toolchain:
-	@echo "" > $(pca10056_toolchain_file)
+	@echo "" > $(toolchain_file)
 
-	@echo 'function(removeDuplicateSubstring stringIn stringOut)' >> $(pca10056_toolchain_file)
-	@echo 'separate_arguments(stringIn)' >> $(pca10056_toolchain_file)
-	@echo 'list(REMOVE_DUPLICATES stringIn)' >> $(pca10056_toolchain_file)
-	@echo 'string(REPLACE ";" " " stringIn "$${stringIn}")' >> $(pca10056_toolchain_file)
-	@echo 'set($${stringOut} "$${stringIn}" PARENT_SCOPE)' >> $(pca10056_toolchain_file)
-	@echo 'endfunction()' >> $(pca10056_toolchain_file)
-	@echo "" >> $(pca10056_toolchain_file)
+	@echo 'function(removeDuplicateSubstring stringIn stringOut)' >> $(toolchain_file)
+	@echo 'separate_arguments(stringIn)' >> $(toolchain_file)
+	@echo 'list(REMOVE_DUPLICATES stringIn)' >> $(toolchain_file)
+	@echo 'string(REPLACE ";" " " stringIn "$${stringIn}")' >> $(toolchain_file)
+	@echo 'set($${stringOut} "$${stringIn}" PARENT_SCOPE)' >> $(toolchain_file)
+	@echo 'endfunction()' >> $(toolchain_file)
+	@echo "" >> $(toolchain_file)
 
-	@echo "set(CMAKE_SYSTEM_NAME Generic)" >> $(pca10056_toolchain_file)
-	@echo "set(CMAKE_SYSTEM_PROCESSOR arm)" >> $(pca10056_toolchain_file)
+	@echo "set(CMAKE_SYSTEM_NAME Generic)" >> $(toolchain_file)
+	@echo "set(CMAKE_SYSTEM_PROCESSOR arm)" >> $(toolchain_file)
 
-	@echo "set(CMAKE_TRY_COMPILE_TARGET_TYPE \"STATIC_LIBRARY\")" >> $(pca10056_toolchain_file)
-	@echo "set(BUILD_SHARED_LIBS OFF)" >> $(pca10056_toolchain_file)
+	@echo "set(CMAKE_TRY_COMPILE_TARGET_TYPE \"STATIC_LIBRARY\")" >> $(toolchain_file)
+	@echo "set(BUILD_SHARED_LIBS OFF)" >> $(toolchain_file)
 
-	@echo "find_program(CMAKE_C_COMPILER arm-none-eabi-gcc)" >> $(pca10056_toolchain_file)
-	@echo "find_program(CMAKE_CXX_COMPILER arm-none-eabi-g++)" >> $(pca10056_toolchain_file)
+	@echo "find_program(CMAKE_C_COMPILER arm-none-eabi-gcc)" >> $(toolchain_file)
+	@echo "find_program(CMAKE_CXX_COMPILER arm-none-eabi-g++)" >> $(toolchain_file)
 
-	@echo "set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)" >> $(pca10056_toolchain_file)
-	@echo "set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)" >> $(pca10056_toolchain_file)
-	@echo "set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)" >> $(pca10056_toolchain_file)
-	@echo "set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)" >> $(pca10056_toolchain_file)
+	@echo "set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)" >> $(toolchain_file)
+	@echo "set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)" >> $(toolchain_file)
+	@echo "set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)" >> $(toolchain_file)
+	@echo "set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)" >> $(toolchain_file)
 
-	@echo "set(CMAKE_CXX_FLAGS \"$(final_c_flag_subbed)\")" >> $(pca10056_toolchain_file)
-	@echo 'removeDuplicateSubstring($${CMAKE_CXX_FLAGS} CMAKE_CXX_FLAGS)' >> $(pca10056_toolchain_file)
-	@echo "set(CMAKE_C_FLAGS \" -std=gnu11 $(final_c_flag_subbed)\")" >> $(pca10056_toolchain_file)
-	@echo 'removeDuplicateSubstring($${CMAKE_C_FLAGS} CMAKE_C_FLAGS)' >> $(pca10056_toolchain_file)
+	@echo "set(CMAKE_CXX_FLAGS \"$(final_c_flag_subbed)\")" >> $(toolchain_file)
+	@echo 'removeDuplicateSubstring($${CMAKE_CXX_FLAGS} CMAKE_CXX_FLAGS)' >> $(toolchain_file)
+	@echo "set(CMAKE_C_FLAGS \" -std=gnu11 $(final_c_flag_subbed)\")" >> $(toolchain_file)
+	@echo 'removeDuplicateSubstring($${CMAKE_C_FLAGS} CMAKE_C_FLAGS)' >> $(toolchain_file)
 	# -x assembler-with-cpp
-	@echo "set(CMAKE_ASM_FLAGS \"$(ASMFLAGS)\")" >> $(pca10056_toolchain_file)
-	@echo 'removeDuplicateSubstring($${CMAKE_ASM_FLAGS} CMAKE_ASM_FLAGS)' >> $(pca10056_toolchain_file)
+	@echo "set(CMAKE_ASM_FLAGS \"$(ASMFLAGS)\")" >> $(toolchain_file)
+	@echo 'removeDuplicateSubstring($${CMAKE_ASM_FLAGS} CMAKE_ASM_FLAGS)' >> $(toolchain_file)
 
-	@echo "set(CMAKE_EXE_LINKER_FLAGS \"$(final_ld_flag_filtered) $(LIB_FILES)\")" >> $(pca10056_toolchain_file)
-	@echo 'removeDuplicateSubstring($${CMAKE_EXE_LINKER_FLAGS} CMAKE_EXE_LINKER_FLAGS)' >> $(pca10056_toolchain_file)
+	@echo "set(CMAKE_EXE_LINKER_FLAGS \"$(final_ld_flag_filtered) $(LIB_FILES)\")" >> $(toolchain_file)
+	@echo 'removeDuplicateSubstring($${CMAKE_EXE_LINKER_FLAGS} CMAKE_EXE_LINKER_FLAGS)' >> $(toolchain_file)
 
-	$(shell sed 's/BOARD_PCA10056/BOARD_PCA10059/g' $(pca10056_toolchain_file) >  $(pca10059_toolchain_file))
+	sed -i 's/-DBOARD_PCA10056//g' $(toolchain_file)
 
 generate_cube_mx_cmakelist:
 	@echo "" > $(output_cmakelist_file)
