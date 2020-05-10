@@ -83,6 +83,7 @@
 
 #include "power_module.hpp"
 
+#include "rv3028.hpp"
 #include "twi_module.hpp"
 
 #include "misc_module.hpp"
@@ -123,7 +124,10 @@ int main(void) {
   misc::timer::init();
   misc::bsp::init();
   power::init();
+
   twi::init();
+  auto rtc = RV3028::get();
+  rtc.init(true, true, false);
 
   ble::init();
   adc::init();
