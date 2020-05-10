@@ -80,7 +80,8 @@ else()
         src/ble/ble_module.cpp
         src/ble/service/bms_module.cpp
         src/ble/service/bas_module.cpp
-        src/ble/service/timetable_service_module.cpp)
+        src/ble/service/timetable_service_module.cpp
+        src/ble/service/time_hour_minute.cpp)
     add_executable(${firmware_executable} ${src_files})
 
     string(TOUPPER ${board_name} board_name_uppercase)

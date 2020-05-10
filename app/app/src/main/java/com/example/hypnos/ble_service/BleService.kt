@@ -15,7 +15,6 @@ import com.example.hypnos.ui.home.ScanResult
 import com.example.hypnos.ui.home.ScanResultsAdapter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import java.nio.Buffer
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -23,6 +22,9 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 import java.util.*
+import java.util.Calendar.HOUR_OF_DAY
+import java.util.Calendar.JANUARY
+import java.util.concurrent.TimeUnit
 
 
 class BleService : Service() {
@@ -52,82 +54,37 @@ class BleService : Service() {
             characteristicShortUUID: String
         ): UUID = UUID.fromString(service_uuid.replaceRange(4, 8, characteristicShortUUID))
 
-        private val TIMETABLE_SERVICE_UUID = "f3641400-b000-4042-ba50-05ca45bf8abc"
+        private val TIMETABLE_SERVICE_UUID = UUID.fromString("f3641400-b000-4042-ba50-05ca45bf8abc")
         private val MORNING_CURFEW_CHARACTERISTIC_UUID =
-            getCharacteristicUuidFromServiceUuid(TIMETABLE_SERVICE_UUID, "1401")
+            getCharacteristicUuidFromServiceUuid(TIMETABLE_SERVICE_UUID.toString(), "1401")
         private val NIGHT_CURFEW_CHARACTERISTIC_UUID =
-            getCharacteristicUuidFromServiceUuid(TIMETABLE_SERVICE_UUID, "1402")
+            getCharacteristicUuidFromServiceUuid(TIMETABLE_SERVICE_UUID.toString(), "1402")
         private val WORK_DURATION_MINUTE_CHARACTERISTIC_UUID =
-            getCharacteristicUuidFromServiceUuid(TIMETABLE_SERVICE_UUID, "1403")
+            getCharacteristicUuidFromServiceUuid(TIMETABLE_SERVICE_UUID.toString(), "1403")
         private val BREAK_DURATION_MINUTE_CHARACTERISTIC_UUID =
-            getCharacteristicUuidFromServiceUuid(TIMETABLE_SERVICE_UUID, "1404")
+            getCharacteristicUuidFromServiceUuid(TIMETABLE_SERVICE_UUID.toString(), "1404")
         private val ACTIVE_EXCEPTIONS_CHARACTERISTIC_UUID =
-            getCharacteristicUuidFromServiceUuid(TIMETABLE_SERVICE_UUID, "1405")
+            getCharacteristicUuidFromServiceUuid(TIMETABLE_SERVICE_UUID.toString(), "1405")
         private val TOKENS_LEFT_CHARACTERISTIC_UUID =
-            getCharacteristicUuidFromServiceUuid(TIMETABLE_SERVICE_UUID, "1406")
+            getCharacteristicUuidFromServiceUuid(TIMETABLE_SERVICE_UUID.toString(), "1406")
 
         const val BLE_SERVICE_LOG_TAG = "ble"
-    }
 
-    private lateinit var sharedPreferences: SharedPreferences
+        // use this https://developer.android.com/guide/topics/ui/controls/pickers for picker
+        data class HourMinuteTime(val hourIn24HourFormat: Int, val minute: Int) {}
 
-    // using Long because Kotlin only has experimental support for unsigned
-    data class TimeException(val startTimeEpoch: Long, val endTimeEpoch: Long) {}
-    class TimeExceptionList() {
-        private val timeExceptions = mutableListOf<TimeException>()
-        private val timeExceptionsType = object : TypeToken<List<TimeException>>() {}.type
+        data class TimeException(val start: Date, val end: Date) {}
 
-        fun replace(rawValues: ByteArray) {
-            val buf =
-                ByteBuffer.wrap(rawValues).order(ByteOrder.LITTLE_ENDIAN).asIntBuffer()
-            val temp = IntArray(buf.remaining())
-            buf.get(temp)
-            assert(temp.size % 2 == 0)
-
-            timeExceptions.clear()
-
-            val iterator = temp.iterator()
-            while (iterator.hasNext()) {
-                val start = iterator.next().toLong()
-                val stop = iterator.next().toLong()
-                timeExceptions.add(TimeException(start, stop))
-            }
-        }
-
-        fun replace(jsonString: String) {
-            timeExceptions.clear()
-            timeExceptions.addAll(
-                Gson().fromJson<List<TimeException>>(
-                    jsonString,
-                    timeExceptionsType
-                )
-            )
-        }
-
-        fun toJson(): String {
-            return Gson().toJson(timeExceptions)
-        }
-
-        fun get(): List<TimeException> {
-            return timeExceptions
-        }
-
-        fun getDates(): List<Pair<Date, Date>> {
-            val ret = mutableListOf<Pair<Date, Date>>()
-            for (e in timeExceptions) {
-                ret.add(
-                    Pair<Date, Date>(
-                        Date(e.startTimeEpoch * 1000),
-                        Date(e.endTimeEpoch * 1000)
-                    )
-                )
-            }
-
-            return ret
+        data class TimetableConfig(
+            var morningCurfew: HourMinuteTime = HourMinuteTime(7, 30),
+            var nightCurfew: HourMinuteTime = HourMinuteTime(9, 30),
+            var workDurationMinute: Int = 120,
+            var breakDurationMinute: Int = 10,
+            var activeExceptions: List<TimeException> = emptyList(),
+            var tokensLeft: Int = 100
+        ) {
         }
     }
-
-    private val timeExceptionList = TimeExceptionList()
 
     private lateinit var ipcMessenger: Messenger
     internal var scanResultsAdapter: ScanResultsAdapter? = null
@@ -150,6 +107,7 @@ class BleService : Service() {
 
     private lateinit var notificationHelper: NotificationHelper
 
+    private lateinit var sharedPreferences: SharedPreferences
 
     override fun onCreate() {
         super.onCreate()
@@ -165,6 +123,27 @@ class BleService : Service() {
 //            val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
 //            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT)
 //        }
+
+        val testConfig = TimetableConfig(
+            morningCurfew = HourMinuteTime(23, 59),
+            activeExceptions = listOf(
+                TimeException(
+                    GregorianCalendar(2000, 6, 16, 23, 59, 30).time,
+                    GregorianCalendar(2030, JANUARY, 29, 10, 15, 59).time
+                ),
+                TimeException(
+                    GregorianCalendar(1958, 1, 19, 2, 30, 4).time,
+                    GregorianCalendar(1967, 8, 12, 11, 50, 1).time
+                )
+            )
+        )
+        with(sharedPreferences.edit()) {
+            putString(TIME_TABLE_CONFIG_KEY, Gson().toJson(testConfig))
+
+            commit()
+        }
+
+        bleGATTCallback = BleGATTCallback(this)
 
         startForeground(
             NotificationHelper.PERSISTENT_NOTIFICATION_ID,
@@ -237,8 +216,58 @@ class BleService : Service() {
 
     private val bleScannerCallback = BleScannerCallback(this)
 
+    private val TIME_TABLE_CONFIG_KEY = "timetableConfig"
+
     internal class BleGATTCallback(context: Context) : BluetoothGattCallback() {
         private var parentContext = context as BleService
+        private lateinit var timetableConfig: TimetableConfig
+        private val characteristicsToWrite = mutableListOf<BluetoothGattCharacteristic>()
+
+        private fun HourMinuteTime.encode(): ByteArray {
+            val buf = ByteBuffer.allocate(Short.SIZE_BYTES).order(ByteOrder.LITTLE_ENDIAN)
+            buf.putShort(((hourIn24HourFormat shl 6) or minute).toShort())
+            return buf.array()
+        }
+
+        private fun decodeHourMinuteTime(bytes: ByteArray): HourMinuteTime {
+            val temp = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asIntBuffer()
+            return HourMinuteTime((temp.get() shr 6) and 0b11111, temp.get() and 0b111111)
+        }
+
+
+        private fun List<TimeException>.encode(): ByteArray {
+            val buf =
+                ByteBuffer.allocate(2 * Int.SIZE_BYTES * this.size).order(ByteOrder.LITTLE_ENDIAN)
+            for (d in this) {
+                buf.putInt(TimeUnit.MILLISECONDS.toSeconds(d.start.time).toInt())
+                buf.putInt(TimeUnit.MILLISECONDS.toSeconds(d.end.time).toInt())
+            }
+
+            return buf.array()
+        }
+
+        private fun decodeTimeExceptions(bytes: ByteArray): List<TimeException> {
+            val buf =
+                ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asIntBuffer()
+            val temp = IntArray(buf.remaining())
+            buf.get(temp)
+            assert(temp.size % 2 == 0)
+
+            val ret = mutableListOf<TimeException>()
+            val iterator = temp.iterator()
+            while (iterator.hasNext()) {
+                val start = iterator.next().toLong()
+                val end = iterator.next().toLong()
+                ret.add(
+                    TimeException(
+                        Date(start * 1000),
+                        Date(end * 1000)
+                    )
+                )
+            }
+
+            return ret
+        }
 
         override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
             super.onConnectionStateChange(gatt, status, newState)
@@ -263,36 +292,65 @@ class BleService : Service() {
             when (status) {
                 BluetoothGatt.GATT_SUCCESS -> {
                     Log.d(BLE_SERVICE_LOG_TAG, "service discovery succeeded")
-                    Log.d(BLE_SERVICE_LOG_TAG, "$MORNING_CURFEW_CHARACTERISTIC_UUID")
+
+                    val configInJson = parentContext.sharedPreferences.getString(
+                        parentContext.TIME_TABLE_CONFIG_KEY,
+                        Gson().toJson(TimetableConfig())
+                    )
+                    val timetableConfigType =
+                        object : TypeToken<TimetableConfig>() {}.type
+                    this.timetableConfig =
+                        Gson().fromJson<TimetableConfig>(configInJson, timetableConfigType)
+                    this.characteristicsToWrite.clear()
 
                     for (service in gatt.services) {
-                        for (characteristic in service.characteristics) {
-                            Log.d(BLE_SERVICE_LOG_TAG, "UUID: ${characteristic.uuid}")
-                            if (characteristic.uuid == BATTERY_LEVEL_CHARACTERISTIC_UUID) {
-                                Log.d(
-                                    BLE_SERVICE_LOG_TAG,
-                                    "found battery characteristic: ${characteristic.properties} ${characteristic.permissions}"
-                                )
-//                                gatt.readCharacteristic(characteristic)
-//                                break;
-                            } else if (characteristic.uuid == MORNING_CURFEW_CHARACTERISTIC_UUID) {
-                                Log.d(BLE_SERVICE_LOG_TAG, "found morning curfew")
-                            } else if (characteristic.uuid == ACTIVE_EXCEPTIONS_CHARACTERISTIC_UUID) {
-                                Log.d(BLE_SERVICE_LOG_TAG, "found active exceptions")
-                                gatt.readCharacteristic(characteristic)
-                                break;
+                        if (service.uuid == TIMETABLE_SERVICE_UUID) {
+                            Log.d(BLE_SERVICE_LOG_TAG, "Found timetable service")
+                            for (characteristic in service.characteristics) {
+                                var isKnown = true
+                                when (characteristic.uuid) {
+                                    MORNING_CURFEW_CHARACTERISTIC_UUID -> {
+                                        assert(timetableConfig.morningCurfew.hourIn24HourFormat == 23)
+                                        assert(timetableConfig.morningCurfew.minute == 59)
+                                        characteristic.value =
+                                            timetableConfig.morningCurfew.encode()
+                                    }
+                                    ACTIVE_EXCEPTIONS_CHARACTERISTIC_UUID -> {
+                                        Log.d(BLE_SERVICE_LOG_TAG, "found active exceptions")
+                                        characteristic.value =
+                                            timetableConfig.activeExceptions.encode()
+                                    }
+                                    else -> {
+                                        isKnown = false
+                                        Log.d(BLE_SERVICE_LOG_TAG, "unknown characteristic")
+                                    }
+                                }
+                                if (isKnown) {
+                                    characteristicsToWrite.add(characteristic)
+                                }
                             }
                         }
                     }
-//                    gatt.readCharacteristic(
-//                        BluetoothGattCharacteristic(
-//                            BATTERY_LEVEL_UUID,
-//                            BluetoothGattCharacteristic.PROPERTY_READ,
-//                            BluetoothGattCharacteristic.PERMISSION_READ
-//                        )
-//                    )
                 }
                 else -> Log.w(BLE_SERVICE_LOG_TAG, "onServicesDiscovered received: $status")
+            }
+            if (characteristicsToWrite.isNotEmpty()) {
+                gatt.writeCharacteristic(characteristicsToWrite.removeAt(0))
+            }
+        }
+
+        override fun onCharacteristicWrite(
+            gatt: BluetoothGatt?,
+            characteristic: BluetoothGattCharacteristic?,
+            status: Int
+        ) {
+            super.onCharacteristicWrite(gatt, characteristic, status)
+
+            if (gatt != null) {
+                assert(status == BluetoothGatt.GATT_SUCCESS)
+                if (characteristicsToWrite.isNotEmpty()) {
+                    assert(gatt.writeCharacteristic(characteristicsToWrite.removeAt(0)))
+                }
             }
         }
 
@@ -304,13 +362,25 @@ class BleService : Service() {
             super.onCharacteristicRead(gatt, characteristic, status)
             when (status) {
                 BluetoothGatt.GATT_SUCCESS -> {
-                    characteristic?.value?.let { values ->
-                        with(parentContext) {
-                            timeExceptionList.replace(values)
-                            Log.d(
-                                BLE_SERVICE_LOG_TAG,
-                                "gatt success: ${timeExceptionList.getDates()}"
-                            )
+                    with(parentContext) {
+                        characteristic?.value?.let { values ->
+                            when (characteristic.uuid) {
+                                ACTIVE_EXCEPTIONS_CHARACTERISTIC_UUID -> {
+                                    val timetableConfigType =
+                                        object : TypeToken<TimetableConfig>() {}.type
+                                    val s = Gson().toJson(timetableConfig)
+                                    Gson().fromJson<TimetableConfig>(s, timetableConfigType)
+
+//                                    timeExceptionList.replace(values)
+//                                    Log.d(
+//                                        BLE_SERVICE_LOG_TAG,
+//                                        "gatt success: ${timeExceptionList.getDates()}"
+//                                    )
+                                }
+                                else -> {
+                                    Log.d(BLE_SERVICE_LOG_TAG, "unknown BLE characteristic")
+                                }
+                            }
                         }
                     }
                 }
@@ -321,7 +391,7 @@ class BleService : Service() {
         }
     }
 
-    private val bleGATTCallback = BleGATTCallback(this)
+    private lateinit var bleGATTCallback: BleGATTCallback
 
 
     internal class IpcCommandHandler(

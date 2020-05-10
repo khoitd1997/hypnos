@@ -53,9 +53,9 @@ namespace ble::timetable_service {
       uint16_t conn_handle;
       uint8_t  uuid_type;
 
-      BleCharacteristic<time_hour_minute_t> morning_curfew_characteristic{
+      BleCharacteristic<TimeHourMinute> morning_curfew_characteristic{
           service_handle, conn_handle, uuid_type, TIMETABLE_MORNING_CURFEW_CHARACTERISTIC_UUID};
-      BleCharacteristic<time_hour_minute_t> night_curfew_characteristic{
+      BleCharacteristic<TimeHourMinute> night_curfew_characteristic{
           service_handle, conn_handle, uuid_type, TIMETABLE_NIGHT_CURFEW_CHARACTERISTIC_UUID};
 
       BleCharacteristic<uint8_t> work_duration_characteristic{
@@ -98,16 +98,13 @@ namespace ble::timetable_service {
           break;
 
         case BLE_GATTS_EVT_WRITE: {
-          //   NRF_LOG_INFO("gatt write");
-          //   ble_gatts_evt_write_t const *p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
+          NRF_LOG_INFO("gatt write");
+          ble_gatts_evt_write_t const *p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
 
-          //   if (p_evt_write->handle == m_timetable.morning_curfew_handle.value_handle) {
-          //     nrf_gpio_pin_toggle(LED_4);
-          //     NRF_LOG_INFO("morning curfew value");
-          //   // NRF_LOG_INFO("morning curfew value: %u",
-          //   //              m_timetable.morning_curfew_characteristic.value);
-          //   /*
-          //   }
+          if (p_evt_write->handle ==
+              p_timetable->active_exceptions_characteristic.characteristc_handles.value_handle) {
+            NRF_LOG_INFO("active exception write");
+          }
         } break;
 
         default:
@@ -117,9 +114,9 @@ namespace ble::timetable_service {
     }
   }  // namespace
 
-  BleCharacteristic<time_hour_minute_t> &morning_curfew_characteristic =
+  BleCharacteristic<TimeHourMinute> &morning_curfew_characteristic =
       m_timetable.morning_curfew_characteristic;
-  BleCharacteristic<time_hour_minute_t> &night_curfew_characteristic =
+  BleCharacteristic<TimeHourMinute> &night_curfew_characteristic =
       m_timetable.night_curfew_characteristic;
 
   BleCharacteristic<uint8_t> &work_duration_characteristic =
@@ -148,7 +145,11 @@ namespace ble::timetable_service {
     APP_ERROR_CHECK(err_code);
 
     morning_curfew_characteristic.init();
-    morning_curfew_characteristic.set(5);
+    morning_curfew_characteristic.set(TimeHourMinute{22, 49});
+    uint8_t  hour;
+    uint16_t minute;
+    morning_curfew_characteristic.get().get(hour, minute);
+    NRF_LOG_INFO("check: hour: %u, minute: %u", hour, minute);
 
     night_curfew_characteristic.init();
 

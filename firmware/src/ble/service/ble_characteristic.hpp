@@ -1,6 +1,7 @@
 #ifndef _BLE_CHARACTERISTIC_HPP
 #define _BLE_CHARACTERISTIC_HPP
 
+#include <cassert>
 #include <cstdint>
 
 #include <type_traits>
@@ -138,7 +139,7 @@ class BleCharacteristic {
     if constexpr (std::is_arithmetic_v<T>) {
       _value = *((T *)(buf));
     } else if constexpr (is_custom) {
-      _value.replace(buf, curr_len);
+      assert(_value.replace(buf, curr_len));
     }
 
     return _value;

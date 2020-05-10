@@ -59,6 +59,18 @@ namespace ble {
           NRF_LOG_INFO("Disconnected");
           pm::delete_disconnected_bonds();
           connection::set_handle(BLE_CONN_HANDLE_INVALID);
+
+          uint8_t  hour;
+          uint16_t minute;
+          timetable_service::morning_curfew_characteristic.get().get(hour, minute);
+          NRF_LOG_INFO("morning_curfew: hour: %u, minute: %u", hour, minute);
+
+          TimeException timeException;
+          if (timetable_service::active_exceptions_characteristic.get().get(0, timeException)) {
+            NRF_LOG_INFO(
+                "active exceptions 1: %u -> %u", timeException.start_time, timeException.end_time);
+          }
+
           break;
 
         case BLE_GATTC_EVT_TIMEOUT:
