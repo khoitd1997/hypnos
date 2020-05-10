@@ -6,6 +6,8 @@
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
+#include "SEGGER_SYSVIEW.h"
+
 namespace misc {
   namespace timer {
     void init() {
@@ -54,4 +56,17 @@ namespace misc {
       NRF_LOG_DEFAULT_BACKENDS_INIT();
     }
   }  // namespace log
+
+  namespace systemview {
+    namespace {
+      SEGGER_SYSVIEW_MODULE testModule{
+          .sModule   = "M=testModule,0 testFunc some_num=%u",
+          .NumEvents = 1,
+      };
+    }
+    void init() {
+      SEGGER_SYSVIEW_Conf();
+      SEGGER_SYSVIEW_RegisterModule(&testModule);
+    }
+  }  // namespace systemview
 }  // namespace misc

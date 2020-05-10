@@ -57,8 +57,6 @@
 
 #include "nrf_delay.h"
 
-#include "SEGGER_SYSVIEW.h"
-
 #include "ble_module.hpp"
 
 #include "advertising_module.hpp"
@@ -110,17 +108,13 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t* p_file_name) {
 
 // static void reset() { pm::delete_all_bonds_unsafe(); }
 
-SEGGER_SYSVIEW_MODULE testModule{
-    .sModule   = "M=testModule,0 testFunc some_num=%u",
-    .NumEvents = 1,
-};
-
-void testFunc() { SEGGER_SYSVIEW_RecordU32(0 + testModule.EventOffset, 5); }
+// void testFunc() { SEGGER_SYSVIEW_RecordU32(0 + testModule.EventOffset, 5); }
 
 APP_TIMER_DEF(m_timer_id);
 
 int main(void) {
   misc::log::init();
+  misc::systemview::init();
   misc::timer::init();
   misc::bsp::init();
   power::init();
@@ -128,6 +122,7 @@ int main(void) {
   twi::init();
   auto rtc = RV3028::get();
   rtc.init(true, true, false);
+  rtc.setTime(23, 49, 23, 1, 29, 12, 2030);
 
   ble::init();
   adc::init();
@@ -146,8 +141,7 @@ int main(void) {
   ble::connection::init();
   ble::pm::init();
 
-  SEGGER_SYSVIEW_Conf();
-  //   //   SEGGER_SYSVIEW_RegisterModule(&testModule);
+  NRF_LOG_INFO("rtc: %s, %u", rtc.stringDateUSA(), rtc.getUNIX());
 
   //   //   misc::timer::create(APP_TIMER_MODE_REPEATED, &m_timer_id, [](void* ctx) { testFunc();
   //   });

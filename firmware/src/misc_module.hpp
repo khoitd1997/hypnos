@@ -17,6 +17,9 @@ namespace misc {
   namespace log {
     void init();
   }
+  namespace systemview {
+    void init();
+  }  // namespace systemview
 }  // namespace misc
 
 #endif  // ! _MISC_MODULE_HPP

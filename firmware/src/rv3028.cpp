@@ -15,6 +15,7 @@ Distributed as-is; no warranty is given.
 #include "rv3028.hpp"
 
 #include <cstdio>
+#include <ctime>
 
 #include "twi_module.hpp"
 
@@ -90,13 +91,14 @@ bool RV3028::init(bool set_24Hour, bool disable_TrickleCharge, bool set_LevelSwi
           writeRegister(RV3028_STATUS, 0x00));
 }
 
-bool RV3028::setTime(uint8_t  sec,
-                     uint8_t  min,
-                     uint8_t  hour,
-                     uint8_t  weekday,
-                     uint8_t  date,
-                     uint8_t  month,
-                     uint16_t year) {
+bool RV3028::setTime(uint8_t    sec,
+                     uint8_t    min,
+                     uint8_t    hour,
+                     uint8_t    weekday,
+                     uint8_t    date,
+                     uint8_t    month,
+                     uint16_t   year,
+                     const bool syncUnix) {
   _time[TIME_SECONDS] = DECtoBCD(sec);
   _time[TIME_MINUTES] = DECtoBCD(min);
   _time[TIME_HOURS]   = DECtoBCD(hour);
@@ -104,6 +106,20 @@ bool RV3028::setTime(uint8_t  sec,
   _time[TIME_DATE]    = DECtoBCD(date);
   _time[TIME_MONTH]   = DECtoBCD(month);
   _time[TIME_YEAR]    = DECtoBCD(year - 2000);
+
+  if (syncUnix) {
+    tm tmVar{
+        .tm_sec   = sec,
+        .tm_min   = min,
+        .tm_hour  = hour,
+        .tm_mday  = date,
+        .tm_mon   = month - 1,
+        .tm_year  = year - 1900,
+        .tm_isdst = 1,
+    };
+    const auto epoch = static_cast<uint32_t>(mktime(&tmVar));
+    setUNIX(epoch);
+  }
 
   bool status = false;
 
@@ -219,7 +235,7 @@ bool RV3028::updateTime() {
 char* RV3028::stringDateUSA() {
   static char date[11];  // Max of mm/dd/yyyy with \0 terminator
   sprintf(date,
-          "%02hhu/%02hhu/20%02hhu",
+          "%02u/%02u/20%02u",
           BCDtoDEC(_time[TIME_MONTH]),
           BCDtoDEC(_time[TIME_DATE]),
           BCDtoDEC(_time[TIME_YEAR]));

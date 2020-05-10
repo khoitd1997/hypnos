@@ -193,13 +193,14 @@ class RV3028 {
                       bool disable_TrickleCharge  = true,
                       bool set_LevelSwitchingMode = true);
 
-  bool setTime(uint8_t  sec,
-               uint8_t  min,
-               uint8_t  hour,
-               uint8_t  weekday,
-               uint8_t  date,
-               uint8_t  month,
-               uint16_t year);
+  bool setTime(uint8_t    sec,
+               uint8_t    min,
+               uint8_t    hour,
+               uint8_t    weekday,
+               uint8_t    date,
+               uint8_t    month,
+               uint16_t   year,
+               const bool syncUnix = true);
   bool setTime(uint8_t* time, uint8_t len);
   bool setSeconds(uint8_t value);
   bool setMinutes(uint8_t value);
