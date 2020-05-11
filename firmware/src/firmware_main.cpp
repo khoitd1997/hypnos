@@ -141,7 +141,6 @@ int main(void) {
   ble::qwr::init();
 
   ble::timetable_service::init();
-  ble::timetable_service::current_unix_time_characteristic.set(rtc.getUNIX());
 
   ble::bms::init();
   ble::bas::init();
