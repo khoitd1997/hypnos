@@ -1,6 +1,6 @@
 package com.example.hypnos.ble_service
 
-import android.app.*
+import android.app.Service
 import android.bluetooth.*
 import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
@@ -8,7 +8,10 @@ import android.bluetooth.le.ScanSettings.*
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.os.*
+import android.os.Handler
+import android.os.IBinder
+import android.os.Message
+import android.os.Messenger
 import android.util.Log
 import android.widget.Toast
 import com.example.hypnos.ui.home.ScanResult
@@ -17,10 +20,8 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -221,15 +222,57 @@ class BleService : Service() {
         private lateinit var timetableConfig: TimetableConfig
         private val characteristicsToWrite = mutableListOf<BluetoothGattCharacteristic>()
 
+        private fun convertToGMT(localTime: HourMinuteTime): HourMinuteTime {
+            val localCalendar = Calendar.getInstance()
+            localCalendar[Calendar.HOUR_OF_DAY] = localTime.hourIn24HourFormat
+            localCalendar[Calendar.MINUTE] = localTime.minute
+            localCalendar[Calendar.SECOND] = 0
+
+            val gmtCalendar = GregorianCalendar(TimeZone.getTimeZone("GMT"))
+            gmtCalendar.timeInMillis = localCalendar.timeInMillis
+
+            return HourMinuteTime(
+                gmtCalendar.get(Calendar.HOUR_OF_DAY),
+                gmtCalendar.get(Calendar.MINUTE)
+            )
+        }
+
+        private fun convertFromGMT(gmtTime: HourMinuteTime): HourMinuteTime {
+            val gmtCalendar = GregorianCalendar(TimeZone.getTimeZone("GMT"))
+            gmtCalendar[Calendar.HOUR_OF_DAY] = gmtTime.hourIn24HourFormat
+            gmtCalendar[Calendar.MINUTE] = gmtTime.minute
+            gmtCalendar[Calendar.SECOND] = 0
+
+            val localCalendar = Calendar.getInstance()
+            localCalendar.timeInMillis = gmtCalendar.timeInMillis
+
+            return HourMinuteTime(
+                localCalendar.get(Calendar.HOUR_OF_DAY),
+                localCalendar.get(Calendar.MINUTE)
+            )
+        }
+
+        init {
+            val test = HourMinuteTime(13, 40)
+            Log.d(BLE_SERVICE_LOG_TAG, "converter: $test ${convertToGMT(test)}")
+        }
+
         private fun HourMinuteTime.encode(): ByteArray {
-            val buf = ByteBuffer.allocate(Short.SIZE_BYTES).order(ByteOrder.LITTLE_ENDIAN)
-            buf.putShort(((hourIn24HourFormat shl 6) or minute).toShort())
-            return buf.array()
+            with(convertToGMT(this)) {
+                val buf = ByteBuffer.allocate(Short.SIZE_BYTES).order(ByteOrder.LITTLE_ENDIAN)
+                buf.putShort(((hourIn24HourFormat shl 6) or minute).toShort())
+                return buf.array()
+            }
         }
 
         private fun decodeHourMinuteTime(bytes: ByteArray): HourMinuteTime {
             val temp = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asIntBuffer()
-            return HourMinuteTime((temp.get() shr 6) and 0b11111, temp.get() and 0b111111)
+            return convertFromGMT(
+                HourMinuteTime(
+                    (temp.get() shr 6) and 0b11111,
+                    temp.get() and 0b111111
+                )
+            )
         }
 
 

@@ -37,7 +37,9 @@ The custom service is called the `Timetable Service`. `Base and other UUIDs` are
 #define UUID_SERVICE 0x1400
 ```
 
-To store an hour:minute info, needs 11 bits(5 for hour, 6(least significant) for minute) for 24-hour format. All timing is stored that way except for the current time service
+To store an hour:minute info, needs 11 bits(5 for hour, 6(least significant) for minute) for 24-hour format. All timing is stored that way except for the current time service.
+
+All times are in GMT.
 
 All would require authentication to read/write
 

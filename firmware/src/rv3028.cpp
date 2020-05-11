@@ -17,6 +17,9 @@ Distributed as-is; no warranty is given.
 #include <cstdio>
 #include <ctime>
 
+#include "app_error.h"
+#include "nrf_log.h"
+
 #include "twi_module.hpp"
 
 //****************************************************************************//
@@ -78,14 +81,8 @@ RV3028& RV3028::get() {
 }
 
 bool RV3028::init(bool set_24Hour, bool disable_TrickleCharge, bool set_LevelSwitchingMode) {
-  if (set_24Hour) {
-    set24Hour();
-    // delay(1);
-  }
-  if (disable_TrickleCharge) {
-    disableTrickleCharge();
-    // delay(1);
-  }
+  if (set_24Hour) { set24Hour(); }
+  if (disable_TrickleCharge) { disableTrickleCharge(); }
 
   return ((set_LevelSwitchingMode ? setBackupSwitchoverMode(3) : true) &&
           writeRegister(RV3028_STATUS, 0x00));
@@ -115,10 +112,11 @@ bool RV3028::setTime(uint8_t    sec,
         .tm_mday  = date,
         .tm_mon   = month - 1,
         .tm_year  = year - 1900,
+        .tm_wday  = weekday,
         .tm_isdst = 1,
     };
     const auto epoch = static_cast<uint32_t>(mktime(&tmVar));
-    setUNIX(epoch);
+    setUNIX(epoch, false);
   }
 
   bool status = false;
@@ -177,46 +175,7 @@ bool RV3028::setYear(uint16_t value) {
 
 // Takes the time from the last build and uses it as the current time
 // Works very well as an arduino sketch
-bool RV3028::setToCompilerTime() {
-  _time[TIME_SECONDS] = DECtoBCD(BUILD_SECOND);
-  _time[TIME_MINUTES] = DECtoBCD(BUILD_MINUTE);
-  _time[TIME_HOURS]   = DECtoBCD(BUILD_HOUR);
-
-  // Build_Hour is 0-23, convert to 1-12 if needed
-  if (is12Hour()) {
-    uint8_t hour = BUILD_HOUR;
-
-    bool pm = false;
-
-    if (hour == 0)
-      hour += 12;
-    else if (hour == 12)
-      pm = true;
-    else if (hour > 12) {
-      hour -= 12;
-      pm = true;
-    }
-
-    _time[TIME_HOURS] = DECtoBCD(hour);  // Load the modified hours
-
-    if (pm == true) _time[TIME_HOURS] |= (1 << HOURS_AM_PM);  // Set AM/PM bit if needed
-  }
-
-  // Calculate weekday (from here: http://stackoverflow.com/a/21235587)
-  // 0 = Sunday, 6 = Saturday
-  uint16_t d = BUILD_DATE;
-  uint16_t m = BUILD_MONTH;
-  uint16_t y = BUILD_YEAR;
-  uint16_t weekday =
-      (d += m < 3 ? y-- : y - 2, 23 * m / 9 + d + 4 + y / 4 - y / 100 + y / 400) % 7 + 1;
-  _time[TIME_WEEKDAY] = DECtoBCD(weekday);
-
-  _time[TIME_DATE]  = DECtoBCD(BUILD_DATE);
-  _time[TIME_MONTH] = DECtoBCD(BUILD_MONTH);
-  _time[TIME_YEAR]  = DECtoBCD(BUILD_YEAR - 2000);  //! Not Y2K (or Y2.1K)-proof :(
-
-  return setTime(_time, TIME_ARRAY_LENGTH);
-}
+bool RV3028::setToCompilerTime() { return setUNIX(CURR_UNIX_TIME); }
 
 // Move the hours, mins, sec, etc registers from RV-3028-C7 into the _time array
 // Needs to be called before printing time or date
@@ -399,7 +358,21 @@ void RV3028::set24Hour() {
 }
 
 // ATTENTION: Real Time and UNIX Time are INDEPENDENT!
-bool RV3028::setUNIX(uint32_t value) {
+bool RV3028::setUNIX(uint32_t value, const bool syncNonUnix) {
+  if (syncNonUnix) {
+    auto temp = static_cast<time_t>(value);
+    tm   ts;
+    gmtime_r(&temp, &ts);
+    setTime(ts.tm_sec,
+            ts.tm_min,
+            ts.tm_hour,
+            ts.tm_wday,
+            ts.tm_mday,
+            ts.tm_mon + 1,
+            ts.tm_year + 1900,
+            false);
+  }
+
   uint8_t unix_reg[4];
   unix_reg[0] = value;
   unix_reg[1] = value >> 8;
@@ -715,24 +688,31 @@ bool RV3028::writeMultipleRegisters(uint8_t addr, uint8_t* values, uint8_t len) 
   return (true);
 }
 
+bool RV3028::disableEEPROMAutoRefresh() {
+  auto ctrl1 = readRegister(RV3028_CTRL1);
+  ctrl1 |= 1 << CTRL1_EERD;
+  return writeRegister(RV3028_CTRL1, ctrl1);
+}
+
+bool RV3028::enableEEPROMAutoRefresh() {
+  auto success = true;
+  auto ctrl1   = readRegister(RV3028_CTRL1);
+  if (ctrl1 == 0x00) success = false;
+  ctrl1 &= ~(1 << CTRL1_EERD);
+  return success && writeRegister(RV3028_CTRL1, ctrl1);
+}
+
 bool RV3028::writeConfigEEPROM_RAMmirror(uint8_t eepromaddr, uint8_t val) {
   bool success = waitforEEPROM();
 
-  // Disable auto refresh by writing 1 to EERD control bit in CTRL1 register
-  uint8_t ctrl1 = readRegister(RV3028_CTRL1);
-  ctrl1 |= 1 << CTRL1_EERD;
-  if (!writeRegister(RV3028_CTRL1, ctrl1)) success = false;
+  success = disableEEPROMAutoRefresh();
   // Write Configuration RAM Register
   writeRegister(eepromaddr, val);
   // Update EEPROM (All Configuration RAM -> EEPROM)
   writeRegister(RV3028_EEPROM_CMD, EEPROMCMD_First);
   writeRegister(RV3028_EEPROM_CMD, EEPROMCMD_Update);
   if (!waitforEEPROM()) success = false;
-  // Reenable auto refresh by writing 0 to EERD control bit in CTRL1 register
-  ctrl1 = readRegister(RV3028_CTRL1);
-  if (ctrl1 == 0x00) success = false;
-  ctrl1 &= ~(1 << CTRL1_EERD);
-  writeRegister(RV3028_CTRL1, ctrl1);
+  enableEEPROMAutoRefresh();
   if (!waitforEEPROM()) success = false;
 
   return success;
@@ -741,10 +721,7 @@ bool RV3028::writeConfigEEPROM_RAMmirror(uint8_t eepromaddr, uint8_t val) {
 uint8_t RV3028::readConfigEEPROM_RAMmirror(uint8_t eepromaddr) {
   bool success = waitforEEPROM();
 
-  // Disable auto refresh by writing 1 to EERD control bit in CTRL1 register
-  uint8_t ctrl1 = readRegister(RV3028_CTRL1);
-  ctrl1 |= 1 << CTRL1_EERD;
-  if (!writeRegister(RV3028_CTRL1, ctrl1)) success = false;
+  success = disableEEPROMAutoRefresh();
   // Read EEPROM Register
   writeRegister(RV3028_EEPROM_ADDR, eepromaddr);
   writeRegister(RV3028_EEPROM_CMD, EEPROMCMD_First);
@@ -752,20 +729,52 @@ uint8_t RV3028::readConfigEEPROM_RAMmirror(uint8_t eepromaddr) {
   if (!waitforEEPROM()) success = false;
   uint8_t eepromdata = readRegister(RV3028_EEPROM_DATA);
   if (!waitforEEPROM()) success = false;
-  // Reenable auto refresh by writing 0 to EERD control bit in CTRL1 register
-  ctrl1 = readRegister(RV3028_CTRL1);
-  if (ctrl1 == 0x00) success = false;
-  ctrl1 &= ~(1 << CTRL1_EERD);
-  writeRegister(RV3028_CTRL1, ctrl1);
+
+  enableEEPROMAutoRefresh();
 
   if (!success) return 0xFF;
   return eepromdata;
 }
 
+void RV3028::writeUserEEPROM(uint8_t addr, uint8_t* data, uint8_t len) {
+  APP_ERROR_CHECK_BOOL(addr >= EEPROM_USER_DATA_START && (addr + len - 1) <= EEPROM_USER_DATA_END);
+
+  waitforEEPROM();
+  disableEEPROMAutoRefresh();
+
+  for (auto i = 0; i < len; ++i) {
+    writeRegister(RV3028_EEPROM_ADDR, addr + i);
+    writeRegister(RV3028_EEPROM_DATA, data[i]);
+    writeRegister(RV3028_EEPROM_CMD, EEPROMCMD_First);
+    writeRegister(RV3028_EEPROM_CMD, EEPROMCMD_WriteSingle);
+    waitforEEPROM();
+  }
+
+  enableEEPROMAutoRefresh();
+  waitforEEPROM();
+}
+void RV3028::readUserEEPROM(uint8_t addr, uint8_t* data, uint8_t len) {
+  APP_ERROR_CHECK_BOOL(addr >= EEPROM_USER_DATA_START && (addr + len - 1) <= EEPROM_USER_DATA_END);
+
+  waitforEEPROM();
+  disableEEPROMAutoRefresh();
+
+  for (auto i = 0; i < len; ++i) {
+    writeRegister(RV3028_EEPROM_ADDR, addr + i);
+    writeRegister(RV3028_EEPROM_CMD, EEPROMCMD_First);
+    writeRegister(RV3028_EEPROM_CMD, EEPROMCMD_ReadSingle);
+    waitforEEPROM();
+    data[i] = readRegister(RV3028_EEPROM_DATA);
+  }
+
+  enableEEPROMAutoRefresh();
+  waitforEEPROM();
+}
+
 // True if success, false if timeout occured
 bool RV3028::waitforEEPROM() {
   while ((readRegister(RV3028_STATUS) & 1 << STATUS_EEBUSY)) {
-    // TODO(khoi): maybe do pwr management here
+    // NOTE: DO NOT RUN PWR MANAGEMENT HERE
   }
 
   return true;

@@ -6,6 +6,8 @@
 
 #include "app_error.h"
 
+#include "power_module.hpp"
+
 namespace twi {
   namespace {
     // volatile auto m_xfer_done = false;
@@ -30,9 +32,7 @@ namespace twi {
     }
 
     void wait_till_bus_free() {
-      while (nrf_drv_twi_is_busy(&m_twi)) {
-        // TODO(khoi): Check if we can run power management here
-      }
+      while (nrf_drv_twi_is_busy(&m_twi)) { power::run(); }
     }
   }  // namespace
 

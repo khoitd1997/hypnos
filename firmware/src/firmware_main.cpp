@@ -122,7 +122,7 @@ int main(void) {
   twi::init();
   auto rtc = RV3028::get();
   rtc.init(true, true, false);
-  rtc.setTime(23, 49, 23, 1, 29, 12, 2030);
+  rtc.setToCompilerTime();
 
   ble::init();
   adc::init();
@@ -142,8 +142,17 @@ int main(void) {
   ble::pm::init();
 
   NRF_LOG_INFO("rtc: %s, %u", rtc.stringDateUSA(), rtc.getUNIX());
+  NRF_LOG_FLUSH();
 
-  //   //   misc::timer::create(APP_TIMER_MODE_REPEATED, &m_timer_id, [](void* ctx) { testFunc();
+  //   uint8_t       test_data[]   = {12, 40, 33, 125, 99};
+  //   const uint8_t test_data_len = sizeof(test_data) / sizeof(test_data[0]);
+  //   rtc.writeUserEEPROM(0, test_data, test_data_len);
+  //   uint8_t read_test_data[test_data_len] = {0};
+  //   rtc.readUserEEPROM(0, read_test_data, test_data_len);
+  //   for (auto i = 0; i < test_data_len; ++i) { NRF_LOG_INFO("%u", read_test_data[i]); }
+
+  //   //   misc::timer::create(APP_TIMER_MODE_REPEATED, &m_timer_id, [](void* ctx) {
+  //   testFunc();
   //   });
   //   //   app_timer_start(m_timer_id, APP_TIMER_TICKS(2000), nullptr);
 

@@ -92,6 +92,11 @@ Distributed as-is; no warranty is given.
 #define RV3028_EEOffset_8_1 0x36  // bits 8 to 1 of EEOffset. Bit 0 is bit 7 of register 0x37
 #define EEPROM_Backup_Register 0x37
 
+// User EEPROM
+#define EEPROM_USER_DATA_START 0x00
+#define EEPROM_USER_DATA_LENGTH 43
+#define EEPROM_USER_DATA_END (EEPROM_USER_DATA_START + EEPROM_USER_DATA_LENGTH - 1)
+
 // BITS IN IMPORTANT REGISTERS
 
 // Bits in Status Register
@@ -231,7 +236,9 @@ class RV3028 {
   void set12Hour();
   void set24Hour();
 
-  bool     setUNIX(uint32_t value);  // Set the UNIX Time (Real Time and UNIX Time are INDEPENDENT!)
+  bool     setUNIX(uint32_t   value,
+                   const bool syncNonUnix =
+                       true);  // Set the UNIX Time (Real Time and UNIX Time are INDEPENDENT!)
   uint32_t getUNIX();
 
   void enableAlarmInterrupt(uint8_t min,
@@ -287,6 +294,8 @@ class RV3028 {
 
   bool    writeConfigEEPROM_RAMmirror(uint8_t eepromaddr, uint8_t val);
   uint8_t readConfigEEPROM_RAMmirror(uint8_t eepromaddr);
+  void    writeUserEEPROM(uint8_t addr, uint8_t* data, uint8_t len);
+  void    readUserEEPROM(uint8_t addr, uint8_t* data, uint8_t len);
   bool    waitforEEPROM();
   void    reset();
 
@@ -295,6 +304,9 @@ class RV3028 {
   bool readBit(uint8_t reg_addr, uint8_t bit_num);
 
  private:
+  bool disableEEPROMAutoRefresh();
+  bool enableEEPROMAutoRefresh();
+
   RV3028() = default;
   uint8_t _time[TIME_ARRAY_LENGTH];
 };
