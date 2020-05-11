@@ -123,11 +123,11 @@ int main(void) {
   twi::init();
   auto rtc = RV3028::get();
   rtc.init(true, true, false);
-  rtc.setToCompilerTime();
+  //   rtc.setToCompilerTime();
   //   rtc.enableClockOut(0);
   //   rtc.disableClockOut();
   rtc.clearClockOutputInterruptFlag();
-  rtc.setTimer(false, 1, 15, true, true, true);
+  //   rtc.setTimer(false, 1, 15, true, true, true);
   //   rtc.enableAlarmInterrupt(3, 19, 0, false, 4, true);
   //   rtc.enableInterruptControlledClockout(0);
 
@@ -167,14 +167,14 @@ int main(void) {
 
   //   NRF_LOG_INFO("Bond Management example started.");
 
-  //   ble::advertising::start();
+  ble::advertising::start();
 
   for (;;) {
-    nrf_delay_ms(5000);
-    NRF_LOG_INFO("rtc: %s", rtc.stringTime());
-    NRF_LOG_FLUSH();
+    // nrf_delay_ms(5000);
+    // NRF_LOG_INFO("rtc: %s", rtc.stringTime());
+    // NRF_LOG_FLUSH();
 
-    // if (!NRF_LOG_PROCESS()) { power::run(); }
+    if (!NRF_LOG_PROCESS()) { power::run(); }
   }
 }
 

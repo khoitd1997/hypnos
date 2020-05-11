@@ -22,6 +22,7 @@
 #include "bms_module.hpp"
 #include "qwr_module.hpp"
 
+#include "rv3028.hpp"
 #include "timetable_service_module.hpp"
 
 namespace ble {
@@ -40,6 +41,7 @@ namespace ble {
 
     void ble_event_handler(ble_evt_t const *p_ble_evt, void *p_context) {
       ret_code_t err_code = NRF_SUCCESS;
+      NRF_LOG_INFO("ble event %u", p_ble_evt->header.evt_id);
 
       pm_handler_secure_on_connection(p_ble_evt);
 
@@ -71,6 +73,10 @@ namespace ble {
                 "active exceptions 1: %u -> %u", timeException.start_time, timeException.end_time);
           }
 
+          break;
+
+        case BLE_GAP_EVT_DATA_LENGTH_UPDATE:
+          ble::timetable_service::current_unix_time_characteristic.set(RV3028::get().getUNIX());
           break;
 
         case BLE_GATTC_EVT_TIMEOUT:

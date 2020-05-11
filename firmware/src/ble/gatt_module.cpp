@@ -13,6 +13,7 @@ namespace ble::gatt {
     NRF_BLE_GATT_DEF(m_gatt);
 
     void gatt_event_handler(nrf_ble_gatt_t* p_gatt, nrf_ble_gatt_evt_t const* p_evt) {
+      NRF_LOG_INFO("gatt event %u", p_evt->evt_id);
       switch (p_evt->evt_id) {
         case NRF_BLE_GATT_EVT_ATT_MTU_UPDATED: {
           NRF_LOG_INFO("ATT MTU exchange completed. MTU set to %u bytes.",

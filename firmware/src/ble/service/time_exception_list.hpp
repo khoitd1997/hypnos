@@ -9,11 +9,11 @@
 
 // NOTE: If you are maintaing it in year 2038, need to change this to 64 bits
 // time_t is 64 bits, that's way too many bits
-typedef uint32_t epoch_time_t;
+typedef uint32_t unix_time_t;
 
 struct TimeException {
-  epoch_time_t start_time;
-  epoch_time_t end_time;
+  unix_time_t start_time;
+  unix_time_t end_time;
 };
 
 class TimeExceptionList : public BleCustomCharacteristicValueType {

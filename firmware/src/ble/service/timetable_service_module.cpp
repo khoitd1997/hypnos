@@ -18,6 +18,8 @@
 #include "ble_characteristic.hpp"
 #include "time_exception_list.hpp"
 
+#include "rv3028.hpp"
+
 // clang-format off
 #define TIMETABLE_SERVICE_DEF(_name)                          \
     static timetable_service_t _name;                         \
@@ -46,6 +48,8 @@ namespace ble::timetable_service {
     constexpr uint16_t TIMETABLE_ACTIVE_EXCEPTIONS_CHARACTERISTIC_UUID = 0x1405;
 
     constexpr uint16_t TIMETABLE_TOKENS_LEFT_CHARACTERISTIC_UUID = 0x1406;
+
+    constexpr uint16_t TIMETABLE_CURRENT_UNIX_TIME_CHARACTERISTIC_UUID = 0x1407;
 
     struct timetable_service_t {
       uint16_t service_handle;
@@ -78,6 +82,9 @@ namespace ble::timetable_service {
 
       BleCharacteristic<uint8_t> tokens_left_characteristic{
           service_handle, conn_handle, uuid_type, TIMETABLE_TOKENS_LEFT_CHARACTERISTIC_UUID};
+
+      BleCharacteristic<unix_time_t> current_unix_time_characteristic{
+          service_handle, conn_handle, uuid_type, TIMETABLE_CURRENT_UNIX_TIME_CHARACTERISTIC_UUID};
     };
     TIMETABLE_SERVICE_DEF(m_timetable);
 
@@ -102,8 +109,10 @@ namespace ble::timetable_service {
           ble_gatts_evt_write_t const *p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
 
           if (p_evt_write->handle ==
-              p_timetable->active_exceptions_characteristic.characteristc_handles.value_handle) {
-            NRF_LOG_INFO("active exception write");
+              p_timetable->current_unix_time_characteristic.characteristc_handles.value_handle) {
+            NRF_LOG_INFO("current time write");
+            RV3028::get().setUNIX(p_timetable->current_unix_time_characteristic.get());
+            NRF_LOG_INFO("unix time: %u", RV3028::get().getUNIX());
           }
         } break;
 
@@ -129,6 +138,9 @@ namespace ble::timetable_service {
 
   BleCharacteristic<uint8_t> &tokens_left_characteristic = m_timetable.tokens_left_characteristic;
 
+  BleCharacteristic<unix_time_t> &current_unix_time_characteristic =
+      m_timetable.current_unix_time_characteristic;
+
   void init() {
     m_timetable.conn_handle = BLE_CONN_HANDLE_INVALID;
 
@@ -145,23 +157,15 @@ namespace ble::timetable_service {
     APP_ERROR_CHECK(err_code);
 
     morning_curfew_characteristic.init();
-    morning_curfew_characteristic.set(TimeHourMinute{22, 49});
-    uint8_t  hour;
-    uint16_t minute;
-    morning_curfew_characteristic.get().get(hour, minute);
-    NRF_LOG_INFO("check: hour: %u, minute: %u", hour, minute);
-
     night_curfew_characteristic.init();
 
     work_duration_characteristic.init();
     break_duration_characteristic.init();
 
     active_exceptions_characteristic.init();
-    TimeExceptionList exception_list;
-    exception_list.push({866450344, 902749805});
-    exception_list.push({1015322584, 1537641659});
-    active_exceptions_characteristic.set(exception_list);
 
     tokens_left_characteristic.init();
+
+    current_unix_time_characteristic.init();
   }
 }  // namespace ble::timetable_service
