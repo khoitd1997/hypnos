@@ -1339,7 +1339,8 @@
 #endif
 // <o> GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS - Number of lower power input pins
 #ifndef GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS
-#define GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS 4
+// only one button or wake up pin can be used at the same time
+#define GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS 1
 #endif
 
 // <o> GPIOTE_CONFIG_IRQ_PRIORITY  - Interrupt priority
@@ -3911,7 +3912,7 @@
 // <e> NRFX_TWIM_ENABLED - nrfx_twim - TWIM peripheral driver
 //==========================================================
 #ifndef NRFX_TWIM_ENABLED
-#define NRFX_TWIM_ENABLED 0
+#define NRFX_TWIM_ENABLED 1
 #endif
 // <q> NRFX_TWIM0_ENABLED  - Enable TWIM0 instance
 
@@ -5605,7 +5606,7 @@
 // <e> TWI_ENABLED - nrf_drv_twi - TWI/TWIM peripheral driver - legacy layer
 //==========================================================
 #ifndef TWI_ENABLED
-#define TWI_ENABLED 0
+#define TWI_ENABLED 1
 #endif
 // <o> TWI_DEFAULT_CONFIG_FREQUENCY  - Frequency
 
@@ -5648,12 +5649,12 @@
 // <e> TWI0_ENABLED - Enable TWI0 instance
 //==========================================================
 #ifndef TWI0_ENABLED
-#define TWI0_ENABLED 0
+#define TWI0_ENABLED 1
 #endif
 // <q> TWI0_USE_EASY_DMA  - Use EasyDMA (if present)
 
 #ifndef TWI0_USE_EASY_DMA
-#define TWI0_USE_EASY_DMA 0
+#define TWI0_USE_EASY_DMA 1
 #endif
 
 // </e>
@@ -5670,6 +5671,10 @@
 #endif
 
 // </e>
+
+#ifndef TWIM_NRF52_ANOMALY_109_WORKAROUND_ENABLED
+#define TWIM_NRF52_ANOMALY_109_WORKAROUND_ENABLED 0
+#endif
 
 // </e>
 
@@ -11675,7 +11680,11 @@
 // <11=> NRF_CLOCK_LF_ACCURACY_1_PPM
 
 #ifndef NRF_SDH_CLOCK_LF_ACCURACY
+#ifndef BOARD_CUSTOM
 #define NRF_SDH_CLOCK_LF_ACCURACY 7
+#else
+#define NRF_SDH_CLOCK_LF_ACCURACY 9  // TODO(khoi): Make sure this is applied on final board
+#endif
 #endif
 
 // </h>

@@ -29,8 +29,10 @@ else()
   find_program(nrfutil_exe NAMES nrfutil) # used in flash_program.sh
   find_program(java_exe NAMES java)
 
+  string(TIMESTAMP curr_unix_time "%s" UTC)
+
   set(common_flags
-      "-D__HEAP_SIZE=8192 -D__STACK_SIZE=8192 -DDOCTEST_CONFIG_DISABLE")
+      "-D__HEAP_SIZE=8192 -D__STACK_SIZE=8192 -DDOCTEST_CONFIG_DISABLE -DCURR_UNIX_TIME=${curr_unix_time}")
   set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${common_flags}")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${common_flags} -Wno-pointer-compare")
   set(CMAKE_CXX_FLAGS
@@ -69,6 +71,9 @@ else()
         ${platform_indepdendent_srcs}
         src/firmware_main.cpp
         src/power_module.cpp
+        src/twi_module.cpp
+        src/gpio_module.cpp
+        src/rv3028.cpp
         src/misc_module.cpp
         src/adc_module.cpp
         src/ble/advertising_module.cpp

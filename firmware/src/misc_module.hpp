@@ -11,12 +11,12 @@ namespace misc {
                 app_timer_id_t const*       id,
                 app_timer_timeout_handler_t callback);
   }  // namespace timer
-  namespace bsp {
-    void init();
-  }
   namespace log {
     void init();
   }
+  namespace systemview {
+    void init();
+  }  // namespace systemview
 }  // namespace misc
 
 #endif  // ! _MISC_MODULE_HPP

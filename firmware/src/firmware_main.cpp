@@ -39,6 +39,7 @@
  */
 
 #include <stdint.h>
+
 #include "app_error.h"
 #include "ble.h"
 
@@ -55,8 +56,6 @@
 #include "nrf_log_ctrl.h"
 
 #include "nrf_delay.h"
-
-#include "SEGGER_SYSVIEW.h"
 
 #include "ble_module.hpp"
 
@@ -82,6 +81,11 @@
 
 #include "power_module.hpp"
 
+#include "gpio_module.hpp"
+
+#include "rv3028.hpp"
+#include "twi_module.hpp"
+
 #include "misc_module.hpp"
 
 /**@brief Callback function for asserts in the SoftDevice.
@@ -106,20 +110,28 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t* p_file_name) {
 
 // static void reset() { pm::delete_all_bonds_unsafe(); }
 
-SEGGER_SYSVIEW_MODULE testModule{
-    .sModule   = "M=testModule,0 testFunc some_num=%u",
-    .NumEvents = 1,
-};
-
-void testFunc() { SEGGER_SYSVIEW_RecordU32(0 + testModule.EventOffset, 5); }
+// void testFunc() { SEGGER_SYSVIEW_RecordU32(0 + testModule.EventOffset, 5); }
 
 APP_TIMER_DEF(m_timer_id);
 
 int main(void) {
   misc::log::init();
+  misc::systemview::init();
   misc::timer::init();
-  misc::bsp::init();
   power::init();
+
+  twi::init();
+  auto rtc = RV3028::get();
+  rtc.init(true, true, false);
+  rtc.setToCompilerTime();
+  //   rtc.enableClockOut(0);
+  //   rtc.disableClockOut();
+  rtc.clearClockOutputInterruptFlag();
+  rtc.setTimer(false, 1, 15, true, true, true);
+  //   rtc.enableAlarmInterrupt(3, 19, 0, false, 4, true);
+  //   rtc.enableInterruptControlledClockout(0);
+
+  gpio::init();
 
   ble::init();
   adc::init();
@@ -138,18 +150,31 @@ int main(void) {
   ble::connection::init();
   ble::pm::init();
 
-  SEGGER_SYSVIEW_Conf();
-  //   SEGGER_SYSVIEW_RegisterModule(&testModule);
+  NRF_LOG_INFO("rtc: %s", rtc.stringTime());
+  NRF_LOG_FLUSH();
 
-  //   misc::timer::create(APP_TIMER_MODE_REPEATED, &m_timer_id, [](void* ctx) { testFunc(); });
-  //   app_timer_start(m_timer_id, APP_TIMER_TICKS(2000), nullptr);
+  //   uint8_t       test_data[]   = {12, 40, 33, 125, 99};
+  //   const uint8_t test_data_len = sizeof(test_data) / sizeof(test_data[0]);
+  //   rtc.writeUserEEPROM(0, test_data, test_data_len);
+  //   uint8_t read_test_data[test_data_len] = {0};
+  //   rtc.readUserEEPROM(0, read_test_data, test_data_len);
+  //   for (auto i = 0; i < test_data_len; ++i) { NRF_LOG_INFO("%u", read_test_data[i]); }
 
-  NRF_LOG_INFO("Bond Management example started.");
+  //   //   misc::timer::create(APP_TIMER_MODE_REPEATED, &m_timer_id, [](void* ctx) {
+  //   testFunc();
+  //   });
+  //   //   app_timer_start(m_timer_id, APP_TIMER_TICKS(2000), nullptr);
 
-  ble::advertising::start();
+  //   NRF_LOG_INFO("Bond Management example started.");
+
+  //   ble::advertising::start();
 
   for (;;) {
-    if (!NRF_LOG_PROCESS()) { power::run(); }
+    nrf_delay_ms(5000);
+    NRF_LOG_INFO("rtc: %s", rtc.stringTime());
+    NRF_LOG_FLUSH();
+
+    // if (!NRF_LOG_PROCESS()) { power::run(); }
   }
 }
 
