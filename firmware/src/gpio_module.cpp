@@ -5,13 +5,23 @@
 
 #include "app_error.h"
 
+#include "rv3028.hpp"
+
 namespace gpio {
   namespace {
     constexpr nrfx_gpiote_pin_t PIN_OUT = NRF_GPIO_PIN_MAP(0, 13);
     constexpr nrfx_gpiote_pin_t PIN_IN  = NRF_GPIO_PIN_MAP(0, 11);
 
     void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action) {
-      nrf_drv_gpiote_out_toggle(PIN_OUT);
+      //   nrf_drv_gpiote_out_clear(PIN_OUT);
+      //   nrf_drv_gpiote_out_set(PIN_OUT);
+      nrf_drv_gpiote_out_set(PIN_OUT);
+
+      auto rtc = RV3028::get();
+      rtc.disableAlarmInterrupt();
+      rtc.clearAlarmInterruptFlag();
+      rtc.disableTimerInterrupt();
+      rtc.clearTimerInterruptFlag();
     }
   }  // namespace
   void init() {
@@ -25,7 +35,9 @@ namespace gpio {
     err_code = nrf_drv_gpiote_out_init(PIN_OUT, &out_config);
     APP_ERROR_CHECK(err_code);
 
-    nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
+    nrf_drv_gpiote_out_clear(PIN_OUT);
+
+    nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_HITOLO(true);
     in_config.pull                       = NRF_GPIO_PIN_PULLUP;
 
     err_code = nrf_drv_gpiote_in_init(PIN_IN, &in_config, in_pin_handler);

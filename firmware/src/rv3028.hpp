@@ -220,7 +220,7 @@ class RV3028 {
 
   char* stringDateUSA();  // Return date in mm-dd-yyyy
                           //   char* stringDate();       // Return date in dd-mm-yyyy
-  //   char* stringTime();       // Return time hh:mm:ss with AM/PM if in 12 hour mode
+  char* stringTime();     // Return time hh:mm:ss with AM/PM if in 12 hour mode
   //   char* stringTimeStamp();  // Return timeStamp in ISO 8601 format yyyy-mm-ddThh:mm:ss
 
   uint8_t  getSeconds();
@@ -273,6 +273,9 @@ class RV3028 {
   void enableTrickleCharge(uint8_t tcr = TCR_15K);  // Trickle Charge Resistor default 15k
   void disableTrickleCharge();
   bool setBackupSwitchoverMode(uint8_t val);
+
+  void enableExternalEventInterrupt(const bool enable_clock_output = true);
+  void disableExternalEventInterrupt(const bool enable_clock_output = true);
 
   void enableClockOut(uint8_t freq);
   void enableInterruptControlledClockout(uint8_t freq);

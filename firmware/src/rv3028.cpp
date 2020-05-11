@@ -192,6 +192,7 @@ bool RV3028::updateTime() {
 
 // Returns a pointer to array of chars that are the date in mm/dd/yyyy format because they're weird
 char* RV3028::stringDateUSA() {
+  updateTime();
   static char date[11];  // Max of mm/dd/yyyy with \0 terminator
   sprintf(date,
           "%02u/%02u/20%02u",
@@ -212,30 +213,31 @@ char* RV3028::stringDateUSA() {
 //   return (date);
 // }
 
-// // Returns a pointer to array of chars that represents the time in hh:mm:ss format
-// // Adds AM/PM if in 12 hour mode
-// char* RV3028::stringTime() {
-//   static char time[11];  // Max of hh:mm:ssXM with \0 terminator
+// Returns a pointer to array of chars that represents the time in hh:mm:ss format
+// Adds AM/PM if in 12 hour mode
+char* RV3028::stringTime() {
+  updateTime();
+  static char time[11];  // Max of hh:mm:ssXM with \0 terminator
 
-//   if (is12Hour() == true) {
-//     char half = 'A';
-//     if (isPM()) half = 'P';
+  if (is12Hour() == true) {
+    char half = 'A';
+    if (isPM()) half = 'P';
 
-//     sprintf(time,
-//             "%02hhu:%02hhu:%02hhu%cM",
-//             BCDtoDEC(_time[TIME_HOURS]),
-//             BCDtoDEC(_time[TIME_MINUTES]),
-//             BCDtoDEC(_time[TIME_SECONDS]),
-//             half);
-//   } else
-//     sprintf(time,
-//             "%02hhu:%02hhu:%02hhu",
-//             BCDtoDEC(_time[TIME_HOURS]),
-//             BCDtoDEC(_time[TIME_MINUTES]),
-//             BCDtoDEC(_time[TIME_SECONDS]));
+    sprintf(time,
+            "%02u:%02u:%02u%cM",
+            BCDtoDEC(_time[TIME_HOURS]),
+            BCDtoDEC(_time[TIME_MINUTES]),
+            BCDtoDEC(_time[TIME_SECONDS]),
+            half);
+  } else
+    sprintf(time,
+            "%02u:%02u:%02u",
+            BCDtoDEC(_time[TIME_HOURS]),
+            BCDtoDEC(_time[TIME_MINUTES]),
+            BCDtoDEC(_time[TIME_SECONDS]));
 
-//   return (time);
-// }
+  return (time);
+}
 
 // char* RV3028::stringTimeStamp() {
 //   static char timeStamp[25];  // Max of yyyy-mm-ddThh:mm:ss.ss with \0 terminator
@@ -599,6 +601,23 @@ bool RV3028::setBackupSwitchoverMode(uint8_t val) {
   if (!writeConfigEEPROM_RAMmirror(EEPROM_Backup_Register, EEPROMBackup)) success = false;
 
   return success;
+}
+
+void RV3028::enableExternalEventInterrupt(const bool enable_clock_output) {
+  setBit(RV3028_CTRL2, CTRL2_EIE);
+  if (enable_clock_output) {
+    setBit(RV3028_INT_MASK, IMT_MASK_CEIE);
+  } else {
+    clearBit(RV3028_INT_MASK, IMT_MASK_CEIE);
+  }
+}
+void RV3028::disableExternalEventInterrupt(const bool enable_clock_output) {
+  clearBit(RV3028_CTRL2, CTRL2_EIE);
+  if (enable_clock_output) {
+    setBit(RV3028_INT_MASK, IMT_MASK_CEIE);
+  } else {
+    clearBit(RV3028_INT_MASK, IMT_MASK_CEIE);
+  }
 }
 
 /*********************************

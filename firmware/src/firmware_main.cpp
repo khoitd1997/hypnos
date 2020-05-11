@@ -81,6 +81,8 @@
 
 #include "power_module.hpp"
 
+#include "gpio_module.hpp"
+
 #include "rv3028.hpp"
 #include "twi_module.hpp"
 
@@ -116,13 +118,20 @@ int main(void) {
   misc::log::init();
   misc::systemview::init();
   misc::timer::init();
-  misc::bsp::init();
   power::init();
 
   twi::init();
   auto rtc = RV3028::get();
   rtc.init(true, true, false);
   rtc.setToCompilerTime();
+  //   rtc.enableClockOut(0);
+  //   rtc.disableClockOut();
+  rtc.clearClockOutputInterruptFlag();
+  rtc.setTimer(false, 1, 15, true, true, true);
+  //   rtc.enableAlarmInterrupt(3, 19, 0, false, 4, true);
+  //   rtc.enableInterruptControlledClockout(0);
+
+  gpio::init();
 
   ble::init();
   adc::init();
@@ -141,7 +150,7 @@ int main(void) {
   ble::connection::init();
   ble::pm::init();
 
-  NRF_LOG_INFO("rtc: %s, %u", rtc.stringDateUSA(), rtc.getUNIX());
+  NRF_LOG_INFO("rtc: %s", rtc.stringTime());
   NRF_LOG_FLUSH();
 
   //   uint8_t       test_data[]   = {12, 40, 33, 125, 99};
@@ -161,7 +170,11 @@ int main(void) {
   //   ble::advertising::start();
 
   for (;;) {
-    if (!NRF_LOG_PROCESS()) { power::run(); }
+    nrf_delay_ms(5000);
+    NRF_LOG_INFO("rtc: %s", rtc.stringTime());
+    NRF_LOG_FLUSH();
+
+    // if (!NRF_LOG_PROCESS()) { power::run(); }
   }
 }
 
