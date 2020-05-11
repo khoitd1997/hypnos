@@ -252,11 +252,6 @@ class BleService : Service() {
             )
         }
 
-        init {
-            val test = HourMinuteTime(13, 40)
-            Log.d(BLE_SERVICE_LOG_TAG, "converter: $test ${convertToGMT(test)}")
-        }
-
         private fun HourMinuteTime.encode(): ByteArray {
             with(convertToGMT(this)) {
                 val buf = ByteBuffer.allocate(Short.SIZE_BYTES).order(ByteOrder.LITTLE_ENDIAN)
