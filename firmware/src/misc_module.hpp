@@ -11,9 +11,6 @@ namespace misc {
                 app_timer_id_t const*       id,
                 app_timer_timeout_handler_t callback);
   }  // namespace timer
-  namespace bsp {
-    void init();
-  }
   namespace log {
     void init();
   }

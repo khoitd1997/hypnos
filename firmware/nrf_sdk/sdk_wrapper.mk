@@ -69,6 +69,9 @@ generate_cmake_toolchain:
 	@echo 'removeDuplicateSubstring($${CMAKE_EXE_LINKER_FLAGS} CMAKE_EXE_LINKER_FLAGS)' >> $(toolchain_file)
 
 	sed -i 's/-DBOARD_PCA10056//g' $(toolchain_file)
+	
+	# remove specific flags here
+	sed -i 's/-DBSP_DEFINES_ONLY//g' $(toolchain_file)
 
 generate_cube_mx_cmakelist:
 	@echo "" > $(output_cmakelist_file)

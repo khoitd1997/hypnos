@@ -1339,7 +1339,8 @@
 #endif
 // <o> GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS - Number of lower power input pins
 #ifndef GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS
-#define GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS 4
+// only one button or wake up pin can be used at the same time
+#define GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS 1
 #endif
 
 // <o> GPIOTE_CONFIG_IRQ_PRIORITY  - Interrupt priority
@@ -11679,7 +11680,11 @@
 // <11=> NRF_CLOCK_LF_ACCURACY_1_PPM
 
 #ifndef NRF_SDH_CLOCK_LF_ACCURACY
+#ifndef BOARD_CUSTOM
 #define NRF_SDH_CLOCK_LF_ACCURACY 7
+#else
+#define NRF_SDH_CLOCK_LF_ACCURACY 9  // TODO(khoi): Make sure this is applied on final board
+#endif
 #endif
 
 // </h>

@@ -72,6 +72,7 @@ else()
         src/firmware_main.cpp
         src/power_module.cpp
         src/twi_module.cpp
+        src/gpio_module.cpp
         src/rv3028.cpp
         src/misc_module.cpp
         src/adc_module.cpp
