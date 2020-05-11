@@ -18,6 +18,8 @@ namespace ble::timetable_service {
 
   extern BleCharacteristic<uint8_t>& tokens_left_characteristic;
 
+  extern BleCharacteristic<unix_time_t>& current_unix_time_characteristic;
+
   void init();
 
 }  // namespace ble::timetable_service
