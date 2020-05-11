@@ -115,8 +115,8 @@ bool RV3028::setTime(uint8_t    sec,
         .tm_wday  = weekday,
         .tm_isdst = 1,
     };
-    const auto epoch = static_cast<uint32_t>(mktime(&tmVar));
-    setUNIX(epoch, false);
+    const auto unixTime = static_cast<uint32_t>(mktime(&tmVar));
+    setUNIX(unixTime, false);
   }
 
   bool status = false;

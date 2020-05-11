@@ -46,7 +46,7 @@ TEST_CASE("replace() method") {
 
   SUBCASE("replace with normal array works") {
     constexpr size_t test_normal_array_size                    = exception_list.max_size() * 2;
-    epoch_time_t     test_normal_array[test_normal_array_size] = {0};
+    unix_time_t      test_normal_array[test_normal_array_size] = {0};
     for (auto i = 0; i < test_normal_array_size; i += 2) {
       test_normal_array[i]     = counter;
       test_normal_array[i + 1] = counter + 1;
@@ -58,19 +58,19 @@ TEST_CASE("replace() method") {
     }
   }
   SUBCASE("replace with too many elements errors") {
-    epoch_time_t test_too_big_array[exception_list.max_size() * 2 + 2] = {0};
+    unix_time_t test_too_big_array[exception_list.max_size() * 2 + 2] = {0};
     REQUIRE(
         not exception_list.replace((uint8_t *)(test_too_big_array), sizeof(test_too_big_array)));
     test_get_equal(exception_list, 0, {0, 1});
   }
   SUBCASE("replace with corrupt data errors") {
-    epoch_time_t test_corrupt_array[exception_list.max_size() * 2 - 1] = {0};
+    unix_time_t test_corrupt_array[exception_list.max_size() * 2 - 1] = {0};
     REQUIRE(
         not exception_list.replace((uint8_t *)(test_corrupt_array), sizeof(test_corrupt_array)));
     test_get_equal(exception_list, 0, {0, 1});
   }
   SUBCASE("replace with none works") {
-    epoch_time_t test_empty_array[] = {};
+    unix_time_t test_empty_array[] = {};
     REQUIRE(exception_list.replace((uint8_t *)(test_empty_array), sizeof(test_empty_array)));
     CHECK(exception_list.is_empty());
     TimeException time_exception;
@@ -124,8 +124,8 @@ TEST_CASE("get() method") {
   TimeException time_exception;
   CHECK(not exception_list.get(0, time_exception));
 
-  epoch_time_t start_time = 5;
-  epoch_time_t end_time   = 10;
+  unix_time_t start_time = 5;
+  unix_time_t end_time   = 10;
   REQUIRE(exception_list.push({start_time, end_time}));
   test_get_equal(exception_list, 0, {start_time, end_time});
 
