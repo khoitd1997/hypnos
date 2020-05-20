@@ -11,12 +11,11 @@ namespace ble::gap {
   namespace {
     constexpr char DEVICE_NAME[] = "Hypnos";
 
-    constexpr uint16_t SECOND_10_MS_UNITS = 100;  //!< Definition of 1 second, when 1 unit is 10 ms.
-    constexpr uint16_t MIN_CONN_INTERVAL  = 7;    //!< uses 1.25 ms units
-    constexpr uint16_t MAX_CONN_INTERVAL  = 400;  //!< uses 1.25 ms units.
-    constexpr uint16_t SLAVE_LATENCY      = 0;    //!< Slave latency.
-    constexpr uint16_t CONN_SUP_TIMEOUT   = 4 * SECOND_10_MS_UNITS;  //!< Timeout uses 10 ms units.
-  }                                                                  // namespace
+    constexpr uint16_t MIN_CONN_INTERVAL = MSEC_TO_UNITS(15, UNIT_1_25_MS);
+    constexpr uint16_t MAX_CONN_INTERVAL = MSEC_TO_UNITS(320, UNIT_1_25_MS);
+    constexpr uint16_t SLAVE_LATENCY     = 0;
+    constexpr uint16_t CONN_SUP_TIMEOUT  = MSEC_TO_UNITS(4000, UNIT_10_MS);
+  }  // namespace
 
   void init() {
     ret_code_t              err_code;
