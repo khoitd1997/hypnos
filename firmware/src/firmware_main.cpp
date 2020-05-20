@@ -100,6 +100,7 @@
  * @param[in]   file_name  File name of the failing ASSERT call.
  */
 void assert_nrf_callback(uint16_t line_num, const uint8_t* p_file_name) {
+  NRF_LOG_FINAL_FLUSH();
   //!< Value used as error code on stack dump, can be used to identify stack location on
   //!< stack unwind.
   app_error_handler(0xDEADBEEF, line_num, p_file_name);
