@@ -8,8 +8,8 @@ class BleCustomCharacteristicValueType {
   virtual ~BleCustomCharacteristicValueType() = default;
 
   virtual uint8_t* data() const                                  = 0;
-  virtual uint16_t max_size_in_bytes() const                     = 0;
-  virtual uint16_t size_in_bytes() const                         = 0;
+  virtual uint8_t  max_size_in_bytes() const                     = 0;
+  virtual uint8_t  size_in_bytes() const                         = 0;
   virtual bool     replace(const uint8_t* buf, const size_t len) = 0;
 };
 

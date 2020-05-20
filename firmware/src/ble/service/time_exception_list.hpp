@@ -14,6 +14,7 @@ typedef uint32_t unix_time_t;
 struct TimeException {
   unix_time_t start_time;
   unix_time_t end_time;
+  friend bool operator==(const TimeException &lhs, const TimeException &rhs);
 };
 
 class TimeExceptionList : public BleCustomCharacteristicValueType {
@@ -24,11 +25,11 @@ class TimeExceptionList : public BleCustomCharacteristicValueType {
   size_t                                           _total_exception = 0;
 
  public:
-  uint16_t size_in_bytes() const override;
-  size_t   size() const;
+  uint8_t size_in_bytes() const override;
+  size_t  size() const;
 
-  uint16_t max_size_in_bytes() const override {
-    return static_cast<uint16_t>(sizeof(TimeException) * max_size());
+  uint8_t max_size_in_bytes() const override {
+    return static_cast<uint8_t>(sizeof(TimeException) * max_size());
   }
   constexpr size_t max_size() const { return _exception_list.max_size(); };
 
@@ -41,6 +42,8 @@ class TimeExceptionList : public BleCustomCharacteristicValueType {
   bool replace(const uint8_t *buf, const size_t len) override;
   bool push(const TimeException &time_exception);
   bool get(const size_t index, TimeException &time_exception) const;
+
+  friend bool operator==(const TimeExceptionList &lhs, const TimeExceptionList &rhs);
 };
 
 #endif  // ! _EXCEPTION_LIST_HPP
