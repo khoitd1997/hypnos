@@ -17,7 +17,7 @@ namespace gpio {
       //   nrf_drv_gpiote_out_set(PIN_OUT);
       nrf_drv_gpiote_out_set(PIN_OUT);
 
-      auto rtc = RV3028::get();
+      auto& rtc = RV3028::get();
       rtc.disableAlarmInterrupt();
       rtc.clearAlarmInterruptFlag();
       rtc.disableTimerInterrupt();
