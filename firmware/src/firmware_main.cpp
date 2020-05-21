@@ -122,7 +122,7 @@ int main(void) {
   power::init();
 
   twi::init();
-  auto rtc = RV3028::get();
+  auto& rtc = RV3028::get();
   rtc.init(true, true, false);
   //   rtc.setToCompilerTime();
   //   rtc.enableClockOut(0);
@@ -151,8 +151,8 @@ int main(void) {
   ble::connection::init();
   ble::pm::init();
 
-  NRF_LOG_INFO("rtc: %s", rtc.stringTime());
-  NRF_LOG_FLUSH();
+  //   NRF_LOG_INFO("rtc: %s", rtc.stringTime());
+  //   NRF_LOG_FLUSH();
 
   //   uint8_t       test_data[]   = {12, 40, 33, 125, 99};
   //   const uint8_t test_data_len = sizeof(test_data) / sizeof(test_data[0]);
@@ -168,7 +168,9 @@ int main(void) {
 
   //   NRF_LOG_INFO("Bond Management example started.");
 
-  ble::advertising::start();
+  //   ble::advertising::start();
+
+  //   misc::timer::test_sleep();
 
   for (;;) {
     // nrf_delay_ms(5000);

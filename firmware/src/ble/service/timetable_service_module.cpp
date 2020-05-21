@@ -316,6 +316,6 @@ namespace ble::timetable_service {
 
     current_unix_time_characteristic.init();
 
-    test_storage_manager();
+    // test_storage_manager();
   }
 }  // namespace ble::timetable_service

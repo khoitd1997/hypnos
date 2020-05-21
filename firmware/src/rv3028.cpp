@@ -18,10 +18,10 @@ Distributed as-is; no warranty is given.
 #include <ctime>
 
 #include "app_error.h"
-#include "nrf_delay.h"
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 
+#include "misc_module.hpp"
 #include "twi_module.hpp"
 
 //****************************************************************************//
@@ -768,7 +768,7 @@ void RV3028::writeUserEEPROM(uint8_t* data, uint8_t len, uint8_t addr) {
     writeRegister(RV3028_EEPROM_DATA, data[i]);
     writeRegister(RV3028_EEPROM_CMD, EEPROMCMD_First);
     writeRegister(RV3028_EEPROM_CMD, EEPROMCMD_WriteSingle);
-    nrf_delay_ms(50);  // TODO(khoi): Replace this with power efficient delay
+    misc::timer::sleep(50);
     waitforEEPROM();
   }
 
@@ -785,7 +785,7 @@ void RV3028::readUserEEPROM(uint8_t* data, uint8_t len, uint8_t addr) {
     writeRegister(RV3028_EEPROM_ADDR, addr + i);
     writeRegister(RV3028_EEPROM_CMD, EEPROMCMD_First);
     writeRegister(RV3028_EEPROM_CMD, EEPROMCMD_ReadSingle);
-    nrf_delay_ms(5);
+    misc::timer::sleep(5);
     waitforEEPROM();
     data[i] = readRegister(RV3028_EEPROM_DATA);
     waitforEEPROM();
