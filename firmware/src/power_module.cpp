@@ -26,6 +26,7 @@ namespace power {
     nrf_gpio_cfg_sense_input(m_wakeup_pin, NRF_GPIO_PIN_PULLUP, NRF_GPIO_PIN_SENSE_LOW);
 
     // error code doesn't matter here, since system still sleep despite return
+    // NOTE: Debug mode has fake sleep so will consume power normally
     sd_power_system_off();
 #ifdef DEBUG_NRF
     NRF_LOG_INFO("Entering Debug Sleep");
