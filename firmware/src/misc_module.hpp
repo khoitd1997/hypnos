@@ -10,6 +10,9 @@ namespace misc {
     void create(const app_timer_mode_t      mode,
                 app_timer_id_t const*       id,
                 app_timer_timeout_handler_t callback);
+
+    void sleep(const uint32_t milliseconds);
+    void test_sleep();
   }  // namespace timer
   namespace log {
     void init();

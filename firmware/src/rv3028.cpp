@@ -19,7 +19,9 @@ Distributed as-is; no warranty is given.
 
 #include "app_error.h"
 #include "nrf_log.h"
+#include "nrf_log_ctrl.h"
 
+#include "misc_module.hpp"
 #include "twi_module.hpp"
 
 //****************************************************************************//
@@ -755,7 +757,7 @@ uint8_t RV3028::readConfigEEPROM_RAMmirror(uint8_t eepromaddr) {
   return eepromdata;
 }
 
-void RV3028::writeUserEEPROM(uint8_t addr, uint8_t* data, uint8_t len) {
+void RV3028::writeUserEEPROM(uint8_t* data, uint8_t len, uint8_t addr) {
   APP_ERROR_CHECK_BOOL(addr >= EEPROM_USER_DATA_START && (addr + len - 1) <= EEPROM_USER_DATA_END);
 
   waitforEEPROM();
@@ -766,13 +768,14 @@ void RV3028::writeUserEEPROM(uint8_t addr, uint8_t* data, uint8_t len) {
     writeRegister(RV3028_EEPROM_DATA, data[i]);
     writeRegister(RV3028_EEPROM_CMD, EEPROMCMD_First);
     writeRegister(RV3028_EEPROM_CMD, EEPROMCMD_WriteSingle);
+    misc::timer::sleep(50);
     waitforEEPROM();
   }
 
   enableEEPROMAutoRefresh();
   waitforEEPROM();
 }
-void RV3028::readUserEEPROM(uint8_t addr, uint8_t* data, uint8_t len) {
+void RV3028::readUserEEPROM(uint8_t* data, uint8_t len, uint8_t addr) {
   APP_ERROR_CHECK_BOOL(addr >= EEPROM_USER_DATA_START && (addr + len - 1) <= EEPROM_USER_DATA_END);
 
   waitforEEPROM();
@@ -782,8 +785,10 @@ void RV3028::readUserEEPROM(uint8_t addr, uint8_t* data, uint8_t len) {
     writeRegister(RV3028_EEPROM_ADDR, addr + i);
     writeRegister(RV3028_EEPROM_CMD, EEPROMCMD_First);
     writeRegister(RV3028_EEPROM_CMD, EEPROMCMD_ReadSingle);
+    misc::timer::sleep(5);
     waitforEEPROM();
     data[i] = readRegister(RV3028_EEPROM_DATA);
+    waitforEEPROM();
   }
 
   enableEEPROMAutoRefresh();

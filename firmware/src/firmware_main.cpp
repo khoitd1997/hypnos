@@ -100,6 +100,7 @@
  * @param[in]   file_name  File name of the failing ASSERT call.
  */
 void assert_nrf_callback(uint16_t line_num, const uint8_t* p_file_name) {
+  NRF_LOG_FINAL_FLUSH();
   //!< Value used as error code on stack dump, can be used to identify stack location on
   //!< stack unwind.
   app_error_handler(0xDEADBEEF, line_num, p_file_name);
@@ -121,7 +122,7 @@ int main(void) {
   power::init();
 
   twi::init();
-  auto rtc = RV3028::get();
+  auto& rtc = RV3028::get();
   rtc.init(true, true, false);
   //   rtc.setToCompilerTime();
   //   rtc.enableClockOut(0);
@@ -150,8 +151,8 @@ int main(void) {
   ble::connection::init();
   ble::pm::init();
 
-  NRF_LOG_INFO("rtc: %s", rtc.stringTime());
-  NRF_LOG_FLUSH();
+  //   NRF_LOG_INFO("rtc: %s", rtc.stringTime());
+  //   NRF_LOG_FLUSH();
 
   //   uint8_t       test_data[]   = {12, 40, 33, 125, 99};
   //   const uint8_t test_data_len = sizeof(test_data) / sizeof(test_data[0]);
@@ -167,7 +168,9 @@ int main(void) {
 
   //   NRF_LOG_INFO("Bond Management example started.");
 
-  ble::advertising::start();
+  //   ble::advertising::start();
+
+  //   misc::timer::test_sleep();
 
   for (;;) {
     // nrf_delay_ms(5000);

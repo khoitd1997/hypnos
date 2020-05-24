@@ -1,7 +1,6 @@
 #ifndef _BLE_CHARACTERISTIC_HPP
 #define _BLE_CHARACTERISTIC_HPP
 
-#include <cassert>
 #include <cstdint>
 
 #include <type_traits>
@@ -27,7 +26,6 @@ class BleCharacteristic {
   const uint16_t &_conn_handle;
   const uint8_t & _uuid_type;
   const uint16_t  _uuid;
-  const bool      _variable_length;
 
   T _value;
 
@@ -54,24 +52,9 @@ class BleCharacteristic {
     curr_len = gatts_value.len;
   }
 
-  uint16_t _get_max_size_in_bytes() const {
-    if constexpr (std::is_arithmetic_v<T>) {
-      return sizeof(_value);
-    } else if constexpr (is_custom) {
-      return _value.max_size_in_bytes();
-    }
-  }
-
-  uint16_t _get_size_in_bytes() const {
-    if constexpr (std::is_arithmetic_v<T>) {
-      return _get_max_size_in_bytes();
-    } else if constexpr (is_custom) {
-      return _value.size_in_bytes();
-    }
-  }
-
  public:
   ble_gatts_char_handles_t characteristc_handles;
+  const bool               is_variable_length;
 
   BleCharacteristic(const uint16_t &service_handle,
                     const uint16_t &conn_handle,
@@ -82,7 +65,7 @@ class BleCharacteristic {
         _conn_handle{conn_handle},
         _uuid_type{uuid_type},
         _uuid{uuid},
-        _variable_length{variable_length} {}
+        is_variable_length{variable_length} {}
 
   void init() {
     const ble_gatts_char_md_t char_md{.char_props{
@@ -91,7 +74,7 @@ class BleCharacteristic {
     }};
 
     ble_gatts_attr_md_t attr_md{
-        .vlen = (_variable_length ? static_cast<uint8_t>(1) : static_cast<uint8_t>(0)),
+        .vlen = (is_variable_length ? static_cast<uint8_t>(1) : static_cast<uint8_t>(0)),
         .vloc = BLE_GATTS_VLOC_STACK,
     };
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
@@ -106,7 +89,7 @@ class BleCharacteristic {
         .p_attr_md = &attr_md,
         .init_len  = 0,
         .init_offs = 0,
-        .max_len   = _get_max_size_in_bytes(),
+        .max_len   = get_max_size_in_bytes(),
     };
 
     const auto err_code = sd_ble_gatts_characteristic_add(
@@ -114,32 +97,55 @@ class BleCharacteristic {
     APP_ERROR_CHECK(err_code);
   }
 
+  uint8_t get_max_size_in_bytes() const {
+    if constexpr (std::is_arithmetic_v<T>) {
+      return sizeof(_value);
+    } else if constexpr (is_custom) {
+      return _value.max_size_in_bytes();
+    }
+  }
+
+  uint8_t get_size_in_bytes() const {
+    if constexpr (std::is_arithmetic_v<T>) {
+      return get_max_size_in_bytes();
+    } else if constexpr (is_custom) {
+      return _value.size_in_bytes();
+    }
+  }
+
+  uint8_t *data() const {
+    if constexpr (std::is_arithmetic_v<T>) {
+      return (uint8_t *)(&_value);
+    } else if constexpr (is_custom) {
+      return _value.data();
+    }
+  }
+
   void set(const T &value) {
     _value = value;
 
-    uint8_t *  buf = nullptr;
-    const auto len = _get_size_in_bytes();
+    uint8_t *  buf = data();
+    const auto len = get_size_in_bytes();
 
-    if constexpr (std::is_arithmetic_v<T>) {
-      buf = (uint8_t *)(&_value);
-    } else if constexpr (is_custom) {
-      buf = _value.data();
-    }
+    set(buf, len);
+  }
 
+  void set(uint8_t *buf, const uint16_t len) {
     _update_ble_stack_value(buf, len);
+    get();
   }
 
   T get() {
-    uint8_t    buf[_get_max_size_in_bytes()] = {0};
-    const auto max_len                       = _get_max_size_in_bytes();
-    uint16_t   curr_len                      = 0;
+    uint8_t    buf[get_max_size_in_bytes()] = {0};
+    const auto max_len                      = get_max_size_in_bytes();
+    uint16_t   curr_len                     = 0;
 
     _get_ble_stack_value(buf, max_len, curr_len);
 
     if constexpr (std::is_arithmetic_v<T>) {
       _value = *((T *)(buf));
     } else if constexpr (is_custom) {
-      assert(_value.replace(buf, curr_len));
+      ASSERT(_value.replace(buf, curr_len));
     }
 
     return _value;

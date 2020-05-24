@@ -18,12 +18,14 @@ struct TimeHourMinute : public BleCustomCharacteristicValueType {
   TimeHourMinute(const uint8_t hour, const uint16_t minute);
 
   void set(const uint8_t hour, const uint16_t minute);
-  void get(uint8_t& hour, uint16_t& minute);
+  void get(uint8_t& hour, uint16_t& minute) const;
 
   uint8_t* data() const override;
-  uint16_t max_size_in_bytes() const override;
-  uint16_t size_in_bytes() const override;
+  uint8_t  max_size_in_bytes() const override;
+  uint8_t  size_in_bytes() const override;
   bool     replace(const uint8_t* buf, const size_t len) override;
+
+  friend bool operator==(const TimeHourMinute& lhs, const TimeHourMinute& rhs);
 };
 
 #endif

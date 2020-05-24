@@ -6,6 +6,10 @@
 #include <iostream>
 #endif
 
+bool operator==(const TimeException &lhs, const TimeException &rhs) {
+  return (lhs.start_time == rhs.start_time) && (lhs.end_time == rhs.end_time);
+}
+
 namespace {
   void test_get_equal(TimeExceptionList &  exception_list,
                       const size_t         index,
@@ -23,8 +27,8 @@ namespace {
   }
 }  // namespace
 
-uint16_t TimeExceptionList::size_in_bytes() const {
-  return static_cast<uint16_t>(sizeof(TimeException) * _total_exception);
+uint8_t TimeExceptionList::size_in_bytes() const {
+  return static_cast<uint8_t>(sizeof(TimeException) * _total_exception);
 }
 size_t TimeExceptionList::size() const { return _total_exception; }
 
@@ -135,5 +139,19 @@ bool TimeExceptionList::get(const size_t index, TimeException &time_exception) c
   if (index >= _total_exception) { return false; }
 
   time_exception = _exception_list.at(index);
+  return true;
+}
+
+bool operator==(const TimeExceptionList &lhs, const TimeExceptionList &rhs) {
+  if (lhs.size() != rhs.size()) { return false; }
+  for (size_t i = 0; i < lhs.size(); ++i) {
+    TimeException lhs_e;
+    lhs.get(i, lhs_e);
+    TimeException rhs_e;
+    rhs.get(i, rhs_e);
+
+    if (!(lhs_e == rhs_e)) { return false; }
+  }
+
   return true;
 }

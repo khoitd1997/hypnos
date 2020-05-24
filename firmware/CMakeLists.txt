@@ -32,7 +32,8 @@ else()
   string(TIMESTAMP curr_unix_time "%s" UTC)
 
   set(common_flags
-      "-D__HEAP_SIZE=8192 -D__STACK_SIZE=8192 -DDOCTEST_CONFIG_DISABLE -DCURR_UNIX_TIME=${curr_unix_time}")
+      "-D__HEAP_SIZE=8192 -D__STACK_SIZE=8192 -DDOCTEST_CONFIG_DISABLE -DCURR_UNIX_TIME=${curr_unix_time} -DDEBUG_NRF"
+  )
   set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${common_flags}")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${common_flags} -Wno-pointer-compare")
   set(CMAKE_CXX_FLAGS
@@ -57,7 +58,8 @@ else()
     COMMAND ${nrfjprog_exe} -f nrf52 --reset)
 
   set(system_view_incs src/system_view/Config/ src/system_view/SEGGER/)
-  set(system_view_srcs src/system_view/Config/SEGGER_SYSVIEW_Config_NoOS.c src/system_view/SEGGER/SEGGER_SYSVIEW.c)
+  set(system_view_srcs src/system_view/Config/SEGGER_SYSVIEW_Config_NoOS.c
+                       src/system_view/SEGGER/SEGGER_SYSVIEW.c)
 
   include_directories(SYSTEM ${NRF_INCS} ${system_view_incs})
   include_directories(src src/sdk_config src/ble src/ble/service/)

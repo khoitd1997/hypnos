@@ -297,10 +297,14 @@ class RV3028 {
 
   bool    writeConfigEEPROM_RAMmirror(uint8_t eepromaddr, uint8_t val);
   uint8_t readConfigEEPROM_RAMmirror(uint8_t eepromaddr);
-  void    writeUserEEPROM(uint8_t addr, uint8_t* data, uint8_t len);
-  void    readUserEEPROM(uint8_t addr, uint8_t* data, uint8_t len);
-  bool    waitforEEPROM();
-  void    reset();
+
+  static constexpr uint8_t getUserEEPROMSize() { return 43; }
+  void writeUserEEPROM(uint8_t* data, uint8_t len, uint8_t addr = EEPROM_USER_DATA_START);
+  void readUserEEPROM(uint8_t* data, uint8_t len, uint8_t addr = EEPROM_USER_DATA_START);
+
+  bool waitforEEPROM();
+
+  void reset();
 
   void setBit(uint8_t reg_addr, uint8_t bit_num);
   void clearBit(uint8_t reg_addr, uint8_t bit_num);
