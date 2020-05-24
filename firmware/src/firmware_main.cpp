@@ -202,7 +202,7 @@ int main(void) {
 
   //   NRF_LOG_INFO("Bond Management example started.");
 
-  //   ble::advertising::start();
+  ble::advertising::start();
 
   //   misc::timer::test_sleep();
 
