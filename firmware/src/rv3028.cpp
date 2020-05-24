@@ -848,6 +848,14 @@ void RV3028::readUserEEPROM(uint8_t* data, uint8_t len, uint8_t addr) {
   enableEEPROMAutoRefresh();
   waitforEEPROM();
 }
+void RV3028::testUserEEPROM() {
+  uint8_t       test_data[]   = {12, 40, 33, 125, 99, 55, 66, 12};
+  const uint8_t test_data_len = sizeof(test_data) / sizeof(test_data[0]);
+  writeUserEEPROM(test_data, test_data_len);
+  uint8_t read_test_data[test_data_len] = {0};
+  readUserEEPROM(read_test_data, test_data_len);
+  for (auto i = 0; i < test_data_len; ++i) { ASSERT(read_test_data[i] == test_data[i]); }
+}
 
 // True if success, false if timeout occured
 bool RV3028::waitforEEPROM() {

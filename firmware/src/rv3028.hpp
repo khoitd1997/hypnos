@@ -320,6 +320,7 @@ class RV3028 {
   static constexpr uint8_t getUserEEPROMSize() { return 43; }
   void writeUserEEPROM(uint8_t* data, uint8_t len, uint8_t addr = EEPROM_USER_DATA_START);
   void readUserEEPROM(uint8_t* data, uint8_t len, uint8_t addr = EEPROM_USER_DATA_START);
+  void testUserEEPROM();
 
   bool waitforEEPROM();
 

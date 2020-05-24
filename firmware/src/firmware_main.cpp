@@ -154,13 +154,6 @@ int main(void) {
   //   NRF_LOG_INFO("rtc: %s", rtc.stringTime());
   //   NRF_LOG_FLUSH();
 
-  //   uint8_t       test_data[]   = {12, 40, 33, 125, 99};
-  //   const uint8_t test_data_len = sizeof(test_data) / sizeof(test_data[0]);
-  //   rtc.writeUserEEPROM(0, test_data, test_data_len);
-  //   uint8_t read_test_data[test_data_len] = {0};
-  //   rtc.readUserEEPROM(0, read_test_data, test_data_len);
-  //   for (auto i = 0; i < test_data_len; ++i) { NRF_LOG_INFO("%u", read_test_data[i]); }
-
   //   //   misc::timer::create(APP_TIMER_MODE_REPEATED, &m_timer_id, [](void* ctx) {
   //   testFunc();
   //   });
