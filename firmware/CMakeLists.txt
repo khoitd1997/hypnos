@@ -3,10 +3,22 @@ project(hypnos C CXX ASM)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(platform_indepdendent_c_and_cpp_flags "-Og -Wall -DDEBUG")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${platform_indepdendent_c_and_cpp_flags}")
+set(platform_indepdendent_c_cpp_debug_flags "-Og -DDEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG
+    "${CMAKE_CXX_FLAGS_DEBUG} ${platform_indepdendent_c_cpp_debug_flags}")
+set(CMAKE_C_FLAGS_DEBUG
+    "${CMAKE_C_FLAGS_DEBUG} ${platform_indepdendent_c_cpp_debug_flags}")
+
+set(platform_indepdendent_c_cpp_release_flags "-O3")
+set(CMAKE_CXX_FLAGS_RELEASE
+    "${CMAKE_CXX_FLAGS_RELEASE} ${platform_indepdendent_c_cpp_release_flags}")
+set(CMAKE_C_FLAGS_RELEASE
+    "${CMAKE_C_FLAGS_RELEASE} ${platform_indepdendent_c_cpp_release_flags}")
+
+set(platform_indepdendent_c_cpp_flags "-Wall")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${platform_indepdendent_c_cpp_flags}")
 set(CMAKE_CXX_FLAGS
-    "${CMAKE_CXX_FLAGS} ${platform_indepdendent_c_and_cpp_flags} -std=c++17")
+    "${CMAKE_CXX_FLAGS} ${platform_indepdendent_c_cpp_flags} -std=c++17")
 
 set(platform_indepdendent_srcs src/ble/service/time_exception_list.cpp)
 
@@ -31,8 +43,11 @@ else()
 
   string(TIMESTAMP curr_unix_time "%s" UTC)
 
+  set(nrf_c_cpp_debug_flags "-DDEBUG_NRF")
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${nrf_c_cpp_debug_flags}")
+  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} ${nrf_c_cpp_debug_flags}")
   set(common_flags
-      "-D__HEAP_SIZE=8192 -D__STACK_SIZE=8192 -DDOCTEST_CONFIG_DISABLE -DCURR_UNIX_TIME=${curr_unix_time} -DDEBUG_NRF"
+      "-D__HEAP_SIZE=8192 -D__STACK_SIZE=8192 -DDOCTEST_CONFIG_DISABLE -DCURR_UNIX_TIME=${curr_unix_time} "
   )
   set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${common_flags}")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${common_flags} -Wno-pointer-compare")

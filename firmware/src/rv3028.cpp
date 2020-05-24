@@ -21,6 +21,8 @@ Distributed as-is; no warranty is given.
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 
+#include "nrf_delay.h"
+
 #include "misc_module.hpp"
 #include "twi_module.hpp"
 
@@ -82,12 +84,20 @@ RV3028& RV3028::get() {
   return singleton;
 }
 
-bool RV3028::init(bool set_24Hour, bool disable_TrickleCharge, bool set_LevelSwitchingMode) {
+bool RV3028::init(nrfx_gpiote_pin_t time_stamp_pin,
+                  bool              set_24Hour,
+                  bool              disable_TrickleCharge,
+                  bool              set_LevelSwitchingMode) {
   if (set_24Hour) { set24Hour(); }
   if (disable_TrickleCharge) { disableTrickleCharge(); }
 
-  return ((set_LevelSwitchingMode ? setBackupSwitchoverMode(3) : true) &&
-          writeRegister(RV3028_STATUS, 0x00));
+  _time_stamp_pin                        = time_stamp_pin;
+  nrf_drv_gpiote_out_config_t out_config = GPIOTE_CONFIG_OUT_SIMPLE(false);
+  const auto                  err_code   = nrf_drv_gpiote_out_init(_time_stamp_pin, &out_config);
+  APP_ERROR_CHECK(err_code);
+  nrf_drv_gpiote_out_clear(_time_stamp_pin);
+
+  return set_LevelSwitchingMode ? setBackupSwitchoverMode(3) : true;
 }
 
 bool RV3028::setTime(uint8_t    sec,
@@ -605,13 +615,25 @@ bool RV3028::setBackupSwitchoverMode(uint8_t val) {
   return success;
 }
 
-void RV3028::enableExternalEventInterrupt(const bool enable_clock_output) {
+void RV3028::setExternalEventInterruptTrigger(const bool rising_edge_is_event) {
+  clearBit(RV3028_EVENTCTRL, EVENTCTRL_ET2);
+  clearBit(RV3028_EVENTCTRL, EVENTCTRL_ET1);
+
+  if (rising_edge_is_event) {
+    setBit(RV3028_EVENTCTRL, EVENTCTRL_EHL);
+  } else {
+    clearBit(RV3028_EVENTCTRL, EVENTCTRL_EHL);
+  }
+}
+void RV3028::enableExternalEventInterrupt(const bool rising_edge_is_event,
+                                          const bool enable_clock_output) {
   setBit(RV3028_CTRL2, CTRL2_EIE);
   if (enable_clock_output) {
     setBit(RV3028_INT_MASK, IMT_MASK_CEIE);
   } else {
     clearBit(RV3028_INT_MASK, IMT_MASK_CEIE);
   }
+  setExternalEventInterruptTrigger(rising_edge_is_event);
 }
 void RV3028::disableExternalEventInterrupt(const bool enable_clock_output) {
   clearBit(RV3028_CTRL2, CTRL2_EIE);
@@ -665,6 +687,38 @@ void RV3028::disableClockOut() {
 bool RV3028::readClockOutputInterruptFlag() { return readBit(RV3028_STATUS, STATUS_CLKF); }
 
 void RV3028::clearClockOutputInterruptFlag() { clearBit(RV3028_STATUS, STATUS_CLKF); }
+
+void RV3028::enableTimeStamp() {
+  clearBit(RV3028_CTRL2, CTRL2_TSE);
+  clearBit(RV3028_CTRL2, CTRL2_EIE);
+  setBit(RV3028_EVENTCTRL, EVENTCTRL_TSOW);
+  clearBit(RV3028_EVENTCTRL, EVENTCTRL_TSS);
+  setBit(RV3028_CTRL2, CTRL2_TSE);
+}
+void RV3028::makeTimeStamp() {
+  if (readBit(RV3028_EVENTCTRL, EVENTCTRL_EHL)) {
+    nrf_drv_gpiote_out_set(_time_stamp_pin);
+    nrf_delay_us(500);
+    nrf_drv_gpiote_out_clear(_time_stamp_pin);
+  } else {
+    nrf_drv_gpiote_out_clear(_time_stamp_pin);
+    nrf_delay_us(500);
+    nrf_drv_gpiote_out_set(_time_stamp_pin);
+  }
+}
+uint32_t RV3028::getTimeStampInUNIX() {
+  tm ts{
+      .tm_sec   = BCDtoDEC(readRegister(RV3028_SECONDS_TS)),
+      .tm_min   = BCDtoDEC(readRegister(RV3028_MINUTES_TS)),
+      .tm_hour  = BCDtoDEC(readRegister(RV3028_HOURS_TS)),
+      .tm_mday  = BCDtoDEC(readRegister(RV3028_DATE_TS)),
+      .tm_mon   = BCDtoDEC(readRegister(RV3028_MONTH_TS)) - 1,
+      .tm_year  = BCDtoDEC(readRegister(RV3028_YEAR_TS)) + 2000 - 1900,
+      .tm_isdst = 1,
+  };
+  return static_cast<uint32_t>(mktime(&ts));
+}
+void RV3028::clearTimeStamp() { setBit(RV3028_EVENTCTRL, EVENTCTRL_TSR); }
 
 // Returns the status byte
 uint8_t RV3028::status(void) { return (readRegister(RV3028_STATUS)); }
@@ -793,6 +847,14 @@ void RV3028::readUserEEPROM(uint8_t* data, uint8_t len, uint8_t addr) {
 
   enableEEPROMAutoRefresh();
   waitforEEPROM();
+}
+void RV3028::testUserEEPROM() {
+  uint8_t       test_data[]   = {12, 40, 33, 125, 99, 55, 66, 12};
+  const uint8_t test_data_len = sizeof(test_data) / sizeof(test_data[0]);
+  writeUserEEPROM(test_data, test_data_len);
+  uint8_t read_test_data[test_data_len] = {0};
+  readUserEEPROM(read_test_data, test_data_len);
+  for (auto i = 0; i < test_data_len; ++i) { ASSERT(read_test_data[i] == test_data[i]); }
 }
 
 // True if success, false if timeout occured
