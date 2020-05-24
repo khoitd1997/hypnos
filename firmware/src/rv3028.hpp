@@ -21,6 +21,9 @@ Distributed as-is; no warranty is given.
 
 #include <cstdint>
 
+#include "nrf_drv_gpiote.h"
+#include "nrf_gpio.h"
+
 // The 7-bit I2C ADDRESS of the RV3028
 #define RV3028_ADDR (uint8_t)0x52
 
@@ -128,6 +131,14 @@ Distributed as-is; no warranty is given.
 #define CTRL2_12_24 1
 #define CTRL2_RESET 0
 
+// Bits in Event Control Register
+#define EVENTCTRL_EHL 6
+#define EVENTCTRL_ET2 5
+#define EVENTCTRL_ET1 4
+#define EVENTCTRL_TSR 2
+#define EVENTCTRL_TSOW 1
+#define EVENTCTRL_TSS 0
+
 // Bits in Hours register
 #define HOURS_AM_PM 5
 
@@ -194,9 +205,10 @@ enum time_order {
 class RV3028 {
  public:
   static RV3028& get();
-  bool           init(bool set_24Hour             = true,
-                      bool disable_TrickleCharge  = true,
-                      bool set_LevelSwitchingMode = true);
+  bool           init(nrfx_gpiote_pin_t time_stamp_pin,
+                      bool              set_24Hour             = true,
+                      bool              disable_TrickleCharge  = true,
+                      bool              set_LevelSwitchingMode = true);
 
   bool setTime(uint8_t    sec,
                uint8_t    min,
@@ -274,7 +286,9 @@ class RV3028 {
   void disableTrickleCharge();
   bool setBackupSwitchoverMode(uint8_t val);
 
-  void enableExternalEventInterrupt(const bool enable_clock_output = true);
+  void setExternalEventInterruptTrigger(const bool rising_edge_is_event);
+  void enableExternalEventInterrupt(const bool rising_edge_is_event = true,
+                                    const bool enable_clock_output  = true);
   void disableExternalEventInterrupt(const bool enable_clock_output = true);
 
   void enableClockOut(uint8_t freq);
@@ -282,6 +296,11 @@ class RV3028 {
   void disableClockOut();
   bool readClockOutputInterruptFlag();
   void clearClockOutputInterruptFlag();
+
+  void     enableTimeStamp();
+  void     makeTimeStamp();
+  uint32_t getTimeStampInUNIX();
+  void     clearTimeStamp();
 
   uint8_t status();  // Returns the status byte
   void    clearInterrupts();
@@ -316,6 +335,8 @@ class RV3028 {
 
   RV3028() = default;
   uint8_t _time[TIME_ARRAY_LENGTH];
+
+  nrfx_gpiote_pin_t _time_stamp_pin;
 };
 
 // POSSIBLE ENHANCEMENTS :
