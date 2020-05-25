@@ -47,8 +47,8 @@ All would require authentication to read/write
 | ------ | --------------------- | ---------------------- | ------------------------------- |
 | 0x1401 | MORNING_CURFEW_END    | time type              | 24-hour format                  |
 | 0x1402 | NIGHT_CURFEW_START    | time type              | 24-hour format                  |
-| 0x1403 | WORK_DURATION_MINUTE  | uint8                  | 0-120                           |
-| 0x1404 | BREAK_DURATION_MINUTE | uint8                  | 0-120                           |
+| 0x1403 | WORK_DURATION_MINUTE  | uint8                  | 30-120                          |
+| 0x1404 | BREAK_DURATION_MINUTE | uint8                  | 5-15                            |
 | 0x1405 | ACTIVE_EXCEPTIONS     | list of pair unix time | 0-4 exceptions                  |
 | 0x1406 | TOKENS_LEFT           | uint8                  | depend on policy implementation |
 | 0x1407 | CURRENT_UNIX_TIME     | uint32                 | until saturation                |
