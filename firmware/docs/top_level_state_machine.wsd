@@ -13,15 +13,18 @@ BondedCheck ---> UnbondedAdvertising: Else
 
 state Bonded {
     state WakeupReason <<choice>>
-    WakeupReason -> TurnOffComputer: UserPushButtonEvent[isBreak]
-        TurnOffComputer --> Sleep
+    WakeupReason -> InitiateShutDown: UserPushButtonEvent[isBreak]
+        InitiateShutDown --> Sleep
+        InitiateShutDown: Toggle MOSFET
+        InitiateShutDown: Enable UserPushButtonEvent Interrupt
 
     WakeupReason -> StartWorkPeriod: UserPushButtonEvent[isNotBreak]
         StartWorkPeriod: Set Timer to Next Work Period End
+        StartWorkPeriod: Disable UserPushButtonEvent Interrupt
         StartWorkPeriod --> Sleep
 
     WakeupReason -> BondedAdvertising: WorkPeriodEndEvent
-        BondedAdvertising --> TurnOffComputer: TimedOut
+        BondedAdvertising --> InitiateShutDown: TimedOut
 
         BondedAdvertising --> Connected: Success
         Connected: Sync Characteristics
@@ -31,7 +34,7 @@ state Bonded {
         Connected -> BondedAdvertising: Fail
         Connected ----> UnbondedAdvertising: ClientUnbond
 
-        AfterConnectBreakCheck --> TurnOffComputer: IsStillBreak
+        AfterConnectBreakCheck --> InitiateShutDown: IsStillBreak
         AfterConnectBreakCheck ---> StartWorkPeriod: Else
 }
 BondedCheck -> WakeupReason: IsBonded
