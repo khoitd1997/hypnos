@@ -2,11 +2,11 @@
 
 ## Dependencies
 
-Make sure ```nRF Command Line Tools```, ```JLink Driver``` and ```nrfutil```(pip) are installed
+Make sure `nRF Command Line Tools`, `JLink Driver` and `nrfutil`(pip) are installed
 
 ## How to build the firmware
 
-The project uses ```CMake``` as the build system. But first, you need to generate cmake files for the nrf52 sdk since they originally supported only makefiles, then you can build various targets that do things from building the firmware to flashing the board.
+The project uses `CMake` as the build system. But first, you need to generate cmake files for the nrf52 sdk since they originally supported only makefiles, then you can build various targets that do things from building the firmware to flashing the board.
 
 ```shell
 # assuming working directory is the project root
@@ -24,11 +24,11 @@ cmake .. -DCMAKE_TOOLCHAIN_FILE=../nrf_sdk/toolchain.cmake
 cmake --build . --target flash_pca10056 # build and flash pca10056 firmware
 ```
 
-A faster way than using the commandline cmake is to use the vscode CMake extension, the project already contains a file describing the cmake ```nrf52 kit``` to be used for building, so select that kit during configuration and you should be good.
+A faster way than using the commandline cmake is to use the vscode CMake extension, the project already contains a file describing the cmake `nrf52 kit` to be used for building, so select that kit during configuration and you should be good.
 
 ## How to build the tests
 
-The project uses ```doctest``` as its unit test framework to test files that are not hardware-depdendent. The test cases themselves are included in the source files of the code being tested themselves. To build:
+The project uses `doctest` as its unit test framework to test files that are not hardware-depdendent. The test cases themselves are included in the source files of the code being tested themselves. To build:
 
 ```shell
 # assuming working directory is the project root
@@ -46,7 +46,7 @@ cmake --build . # build and run all tests by default
 NRF52840 power consumption data, measured using a trueRMS multimeter with supply voltage of 3V, assuming bonded device. At the longest adv interval, the device is still detected and connected pretty fast, although to the time connect is inconsistent.
 
 | Type | Adv Interval(0.625 ms) | uA  |
-|------|------------------------|-----|
+| ---- | ---------------------- | --- |
 | Slow | 50                     | 250 |
 | Slow | 1000                   | 70  |
 | Slow | 3000                   | 50  |
@@ -54,7 +54,9 @@ NRF52840 power consumption data, measured using a trueRMS multimeter with supply
 
 ## State Machine
 
-[Link](https://www.lucidchart.com/documents/view/bfb6aadf-c374-40c3-be28-2cf55af65832/0_0)
+### Top Level
+
+![](./docs/TopLevelDiagram.png)
 
 ## References
 

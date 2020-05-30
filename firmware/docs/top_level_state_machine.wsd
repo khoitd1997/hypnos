@@ -1,0 +1,41 @@
+@startuml TopLevelDiagram
+hide empty description
+
+state BondedCheck <<choice>>
+Sleep ---> BondedCheck: AnyWakeupEvent
+
+state Unbonded {
+    UnbondedAdvertising --> UnbondedAdvertising: TimedOut
+    UnbondedAdvertising --> Bonding: Success
+    Bonding-->UnbondedAdvertising: Fail
+}
+BondedCheck ---> UnbondedAdvertising: Else
+
+state Bonded {
+    state WakeupReason <<choice>>
+    WakeupReason -> InitiateShutDown: UserPushButtonEvent[isBreak]
+        InitiateShutDown --> Sleep
+        InitiateShutDown: Toggle MOSFET
+        InitiateShutDown: Enable UserPushButtonEvent Interrupt
+
+    WakeupReason -> StartWorkPeriod: UserPushButtonEvent[isNotBreak]
+        StartWorkPeriod: Set Timer to Next Work Period End
+        StartWorkPeriod: Disable UserPushButtonEvent Interrupt
+        StartWorkPeriod --> Sleep
+
+    WakeupReason -> BondedAdvertising: WorkPeriodEndEvent
+        BondedAdvertising --> InitiateShutDown: TimedOut
+
+        BondedAdvertising --> Connected: Success
+        Connected: Sync Characteristics
+        Bonding---->Connected: Success
+        state AfterConnectBreakCheck <<choice>>
+        Connected ---> AfterConnectBreakCheck: Success
+        Connected -> BondedAdvertising: Fail
+        Connected ----> UnbondedAdvertising: ClientUnbond
+
+        AfterConnectBreakCheck --> InitiateShutDown: IsStillBreak
+        AfterConnectBreakCheck ---> StartWorkPeriod: Else
+}
+BondedCheck -> WakeupReason: IsBonded
+@enduml
