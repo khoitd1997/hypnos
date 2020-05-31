@@ -129,6 +129,8 @@ namespace ble::pm {
     APP_ERROR_CHECK(err_code);
   }
 
+  bool is_bonded() { return pm_next_peer_id_get(PM_PEER_ID_INVALID) != PM_PEER_ID_INVALID; }
+
   void delete_disconnected_bonds() {
     ble_conn_state_for_each_set_user_flag(m_bonds_to_delete_flag, delete_single_bond, NULL);
   }
