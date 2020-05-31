@@ -83,6 +83,8 @@
 
 #include "gpio_module.hpp"
 
+#include "computer_switch_module.hpp"
+
 #include "rv3028.hpp"
 #include "twi_module.hpp"
 
@@ -146,8 +148,9 @@ static bool isInBreak() {
   return false;
 }
 
-constexpr nrfx_gpiote_pin_t WAKEUP_PIN     = NRF_GPIO_PIN_MAP(0, 11);
-constexpr nrfx_gpiote_pin_t TIME_STAMP_PIN = NRF_GPIO_PIN_MAP(0, 13);
+constexpr nrfx_gpiote_pin_t COMPUTER_SWITCH_PIN = NRF_GPIO_PIN_MAP(0, 2);
+constexpr nrfx_gpiote_pin_t WAKEUP_PIN          = NRF_GPIO_PIN_MAP(0, 9);
+constexpr nrfx_gpiote_pin_t TIME_STAMP_PIN      = NRF_GPIO_PIN_MAP(0, 10);
 
 int main(void) {
   misc::log::init();
@@ -155,6 +158,8 @@ int main(void) {
   misc::timer::init();
   power::init(WAKEUP_PIN);
   gpio::init();
+
+  computer_switch::init(COMPUTER_SWITCH_PIN);
 
   twi::init();
   auto& rtc = RV3028::get();

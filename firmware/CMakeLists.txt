@@ -88,6 +88,7 @@ else()
         ${platform_indepdendent_srcs}
         src/firmware_main.cpp
         src/power_module.cpp
+        src/computer_switch_module.cpp
         src/twi_module.cpp
         src/gpio_module.cpp
         src/rv3028.cpp
