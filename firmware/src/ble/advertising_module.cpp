@@ -64,10 +64,6 @@ namespace ble::advertising {
           APP_ERROR_CHECK(err_code);
           break;
 
-        case BLE_ADV_EVT_IDLE:
-          power::sleep();
-          break;
-
         default:
           break;
       }

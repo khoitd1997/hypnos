@@ -148,22 +148,23 @@ static bool isInBreak() {
   return false;
 }
 
-constexpr nrfx_gpiote_pin_t COMPUTER_SWITCH_PIN = NRF_GPIO_PIN_MAP(0, 2);
-constexpr nrfx_gpiote_pin_t WAKEUP_PIN          = NRF_GPIO_PIN_MAP(0, 9);
-constexpr nrfx_gpiote_pin_t TIME_STAMP_PIN      = NRF_GPIO_PIN_MAP(0, 10);
+constexpr nrfx_gpiote_pin_t COMPUTER_SWITCH_PIN     = NRF_GPIO_PIN_MAP(0, 2);
+constexpr nrfx_gpiote_pin_t USER_INPUT_PIN          = NRF_GPIO_PIN_MAP(0, 3);
+constexpr nrfx_gpiote_pin_t RTC_INTERRUPT_INPUT_PIN = NRF_GPIO_PIN_MAP(0, 9);
+constexpr nrfx_gpiote_pin_t RTC_TIME_STAMP_PIN      = NRF_GPIO_PIN_MAP(0, 10);
 
 int main(void) {
   misc::log::init();
   misc::systemview::init();
   misc::timer::init();
-  power::init(WAKEUP_PIN);
+  power::init(USER_INPUT_PIN, RTC_INTERRUPT_INPUT_PIN);
   gpio::init();
 
   computer_switch::init(COMPUTER_SWITCH_PIN);
 
   twi::init();
   auto& rtc = RV3028::get();
-  rtc.init(TIME_STAMP_PIN, true, true, false);
+  rtc.init(RTC_TIME_STAMP_PIN, true, true, false);
   //   rtc.enableExternalEventInterrupt(true, false);
   //   rtc.setToCompilerTime();
   //   rtc.enableClockOut(0);
