@@ -52,6 +52,8 @@
 #include "nrf_sdh_ble.h"
 #include "nrf_sdh_soc.h"
 
+#include "nrf_nvic.h"
+
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 
@@ -80,8 +82,6 @@
 #include "adc_module.hpp"
 
 #include "power_module.hpp"
-
-#include "gpio_module.hpp"
 
 #include "computer_switch_module.hpp"
 
@@ -113,26 +113,42 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t* p_file_name) {
 // TODO(khoi): Remove this after development is done
 #pragma GCC diagnostic ignored "-Wunused-function"
 
-// static void reset() {
-// ble::pm::delete_all_bonds_unsafe();
-// restart MCU
-// }
-
 // void testFunc() { SEGGER_SYSVIEW_RecordU32(0 + testModule.EventOffset, 5); }
-
-APP_TIMER_DEF(m_timer_id);
 
 constexpr nrfx_gpiote_pin_t COMPUTER_SWITCH_PIN     = NRF_GPIO_PIN_MAP(0, 2);
 constexpr nrfx_gpiote_pin_t USER_INPUT_PIN          = NRF_GPIO_PIN_MAP(0, 3);
 constexpr nrfx_gpiote_pin_t RTC_INTERRUPT_INPUT_PIN = NRF_GPIO_PIN_MAP(0, 9);
 constexpr nrfx_gpiote_pin_t RTC_TIME_STAMP_PIN      = NRF_GPIO_PIN_MAP(0, 10);
+constexpr nrfx_gpiote_pin_t RESET_PIN               = NRF_GPIO_PIN_MAP(0, 13);
+
+void configure_reset_pin() {
+  nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_HITOLO(false);
+  in_config.pull                       = NRF_GPIO_PIN_PULLUP;
+
+  const auto err_code = nrf_drv_gpiote_in_init(
+      RESET_PIN, &in_config, [](nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action) {
+        nrf_drv_gpiote_in_event_disable(RESET_PIN);
+        ble::pm::delete_all_bonds_unsafe();
+        sd_nvic_SystemReset();
+      });
+  APP_ERROR_CHECK(err_code);
+
+  nrf_drv_gpiote_in_event_enable(RESET_PIN, true);
+}
+
+APP_TIMER_DEF(m_timer_id);
 
 int main(void) {
   misc::log::init();
   misc::systemview::init();
   misc::timer::init();
   power::init(USER_INPUT_PIN, RTC_INTERRUPT_INPUT_PIN);
-  gpio::init();
+  {
+    const auto err_code = nrf_drv_gpiote_init();
+    APP_ERROR_CHECK(err_code);
+  }
+
+  configure_reset_pin();
 
   computer_switch::init(COMPUTER_SWITCH_PIN);
 
@@ -143,6 +159,8 @@ int main(void) {
   // NOTE: MCU automatically switches to external LFCLK when it's available
   rtc.enableClockOut(0);
   rtc.enableTimeStamp();
+  rtc.disableAlarmInterrupt();
+  rtc.disableTimerInterrupt();
 
   ble::init();
   adc::init();
@@ -151,7 +169,7 @@ int main(void) {
   ble::advertising::init();
   ble::connection::init();
   ble::pm::init();
-  ble::pm::delete_all_bonds_unsafe();
+  //   ble::pm::delete_all_bonds_unsafe();
 
   ble::qwr::init();
 
@@ -159,6 +177,9 @@ int main(void) {
 
   ble::bms::init();
   ble::bas::init();
+
+  NRF_LOG_PROCESS();
+  power::sleep(false, true);
 
   const auto wakeup_reason = power::get_wakeup_reason();
   NRF_LOG_INFO("Wakeup Reason: %d", wakeup_reason);

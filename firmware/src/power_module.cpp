@@ -20,8 +20,6 @@ namespace power {
   void init(const nrfx_gpiote_pin_t user_input_pin, const nrfx_gpiote_pin_t rtc_interrupt_pin) {
     m_user_input_pin    = user_input_pin;
     m_rtc_interrupt_pin = rtc_interrupt_pin;
-    nrf_gpio_input_disconnect(m_user_input_pin);
-    nrf_gpio_input_disconnect(rtc_interrupt_pin);
 
     if (nrf_gpio_pin_latch_get(m_user_input_pin)) { m_wakeup_reason = Wakeup_Reason::USER_INPUT; }
     if (nrf_gpio_pin_latch_get(m_rtc_interrupt_pin)) {
@@ -48,18 +46,24 @@ namespace power {
 #else
       auto pin_pull = NRF_GPIO_PIN_NOPULL;
 #endif
-      nrf_gpio_cfg_sense_input(m_user_input_pin, pin_pull, NRF_GPIO_PIN_SENSE_LOW);
+      nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_HITOLO(false);
+      in_config.pull                       = pin_pull;
+      const auto err_code = nrf_drv_gpiote_in_init(m_user_input_pin, &in_config, nullptr);
+      APP_ERROR_CHECK(err_code);
+      nrf_drv_gpiote_in_event_enable(m_user_input_pin, true);
     }
+
     auto& rtc = RV3028::get();
-    rtc.clearAlarmInterruptFlag();
-    rtc.clearTimerInterruptFlag();
+    rtc.clearInterrupts();
     if (enable_rtc_wakeup) {
       rtc.enableAlarmInterrupt();
       rtc.enableTimerInterrupt();
-      nrf_gpio_cfg_sense_input(m_rtc_interrupt_pin, NRF_GPIO_PIN_PULLUP, NRF_GPIO_PIN_SENSE_LOW);
-    } else {
-      rtc.disableAlarmInterrupt();
-      rtc.disableTimerInterrupt();
+
+      nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_HITOLO(false);
+      in_config.pull                       = NRF_GPIO_PIN_PULLUP;
+      const auto err_code = nrf_drv_gpiote_in_init(m_rtc_interrupt_pin, &in_config, nullptr);
+      APP_ERROR_CHECK(err_code);
+      nrf_drv_gpiote_in_event_enable(m_rtc_interrupt_pin, true);
     }
 
     // error code doesn't matter here, since system still sleep despite return

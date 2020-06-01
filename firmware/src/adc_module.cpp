@@ -42,7 +42,7 @@ namespace adc {
     const auto        err_code = nrf_drv_saadc_sample_convert(channel, &temp);
     APP_ERROR_CHECK(err_code);
 
-    NRF_LOG_INFO("ADC mv: %d", conv_adc_result_to_millivolt(temp));
+    // NRF_LOG_INFO("ADC mv: %d", conv_adc_result_to_millivolt(temp));
 
     return conv_adc_result_to_millivolt(temp);
   }
