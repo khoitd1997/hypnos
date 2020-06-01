@@ -13,8 +13,11 @@
 
 #include "nrf_sdh_ble.h"
 
+#include "computer_switch_module.hpp"
 #include "pm_module.hpp"
 #include "power_module.hpp"
+
+#include "state_machine.hpp"
 
 #include "timetable_service_module.hpp"
 
@@ -23,11 +26,10 @@ namespace ble::advertising {
     // constexpr auto ADVERTISING_MODE = BLE_ADV_MODE_SLOW;
     constexpr auto ADVERTISING_MODE = BLE_ADV_MODE_FAST;
 
-    //!< advertising interval (in units of 0.625 m
-    constexpr uint32_t ADVERTISING_FAST_INTERVAL = 100;
-    constexpr uint32_t ADVERTISING_SLOW_INTERVAL = 10000;
+    constexpr uint32_t ADVERTISING_FAST_INTERVAL = MSEC_TO_UNITS(62.5, UNIT_0_625_MS);
+    constexpr uint32_t ADVERTISING_SLOW_INTERVAL = MSEC_TO_UNITS(6250, UNIT_0_625_MS);
 
-    constexpr uint32_t ADVERTISING_DURATION = 18000;  //!< units of 10 milliseconds.
+    constexpr uint32_t ADVERTISING_DURATION = MSEC_TO_UNITS(180000, UNIT_10_MS);
 
     ble_uuid_t ADVERTISING_UUIDS[] = {
         {BLE_UUID_BMS_SERVICE, BLE_UUID_TYPE_BLE}, {BLE_UUID_BATTERY_SERVICE, BLE_UUID_TYPE_BLE},
@@ -53,19 +55,24 @@ namespace ble::advertising {
           break;
 
         case BLE_ADV_EVT_FAST:
-          NRF_LOG_INFO("Fast adverstising.");
+          //   NRF_LOG_INFO("Fast adverstising.");
           err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
           APP_ERROR_CHECK(err_code);
           break;
 
         case BLE_ADV_EVT_SLOW:
-          NRF_LOG_INFO("slow adverstising.");
+          //   NRF_LOG_INFO("slow adverstising.");
           err_code = bsp_indication_set(BSP_INDICATE_USER_STATE_2);
           APP_ERROR_CHECK(err_code);
           break;
 
         case BLE_ADV_EVT_IDLE:
-          power::sleep();
+          NRF_LOG_INFO("Idle advertising");
+          if (not pm::is_bonded()) {
+            start();
+          } else {
+            state_machine::end_work_period(true);
+          }
           break;
 
         default:
@@ -86,9 +93,8 @@ namespace ble::advertising {
     init.advdata.uuids_complete.uuid_cnt = sizeof(ADVERTISING_UUIDS) / sizeof(ADVERTISING_UUIDS[0]);
     init.advdata.uuids_complete.p_uuids  = ADVERTISING_UUIDS;
 
-    // TODO(khoi): Enable when on final build
-    //   init.config.ble_adv_on_disconnect_disabled = true;
-    init.config.ble_adv_whitelist_enabled = false;
+    init.config.ble_adv_on_disconnect_disabled = true;
+    init.config.ble_adv_whitelist_enabled      = false;
 
     // NOTE: still need to initialize fast o.t.w will not work
     init.config.ble_adv_fast_enabled  = true;
@@ -112,13 +118,9 @@ namespace ble::advertising {
     ble_advertising_conn_cfg_tag_set(&m_advertising, CONN_CFG_TAG);
   }
 
-  void start(const bool delete_bonds) {
-    if (delete_bonds) {
-      pm::delete_all_bonds_unsafe();
-      // Advertising is started by PM_EVT_PEERS_DELETE_SUCCEEDED event.
-    } else {
-      auto ret = ble_advertising_start(&m_advertising, ADVERTISING_MODE);
-      APP_ERROR_CHECK(ret);
-    }
+  void start() {
+    NRF_LOG_INFO("Started Advertising %d", pm::is_bonded());
+    auto ret = ble_advertising_start(&m_advertising, ADVERTISING_MODE);
+    APP_ERROR_CHECK(ret);
   }
 }  // namespace ble::advertising

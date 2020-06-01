@@ -45,6 +45,7 @@
 #ifdef USE_APP_CONFIG
 #include "app_config.h"
 #endif
+
 // <h> Board Support
 
 //==========================================================
@@ -1340,7 +1341,7 @@
 // <o> GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS - Number of lower power input pins
 #ifndef GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS
 // only one button or wake up pin can be used at the same time
-#define GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS 1
+#define GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS 3
 #endif
 
 // <o> GPIOTE_CONFIG_IRQ_PRIORITY  - Interrupt priority
@@ -1862,7 +1863,7 @@
 #endif
 // <o> NRFX_GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS - Number of lower power input pins
 #ifndef NRFX_GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS
-#define NRFX_GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS 1
+#define NRFX_GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS 3
 #endif
 
 // <o> NRFX_GPIOTE_CONFIG_IRQ_PRIORITY  - Interrupt priority
@@ -10278,7 +10279,7 @@
 // <e> PM_LOG_ENABLED - Enable logging in Peer Manager and its submodules.
 //==========================================================
 #ifndef PM_LOG_ENABLED
-#define PM_LOG_ENABLED 1
+#define PM_LOG_ENABLED 0
 #endif
 // <o> PM_LOG_LEVEL  - Default Severity level
 

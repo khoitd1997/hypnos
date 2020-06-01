@@ -43,7 +43,7 @@ else()
 
   string(TIMESTAMP curr_unix_time "%s" UTC)
 
-  set(nrf_c_cpp_debug_flags "-DDEBUG_NRF")
+  set(nrf_c_cpp_debug_flags "-DDEBUG_NRF -DCONFIG_NFCT_PINS_AS_GPIOS")
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${nrf_c_cpp_debug_flags}")
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} ${nrf_c_cpp_debug_flags}")
   set(common_flags
@@ -90,10 +90,10 @@ else()
         src/power_module.cpp
         src/computer_switch_module.cpp
         src/twi_module.cpp
-        src/gpio_module.cpp
         src/rv3028.cpp
         src/misc_module.cpp
         src/adc_module.cpp
+        src/state_machine.cpp
         src/ble/advertising_module.cpp
         src/ble/qwr_module.cpp
         src/ble/pm_module.cpp

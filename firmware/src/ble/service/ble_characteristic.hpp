@@ -77,8 +77,8 @@ class BleCharacteristic {
         .vlen = (is_variable_length ? static_cast<uint8_t>(1) : static_cast<uint8_t>(0)),
         .vloc = BLE_GATTS_VLOC_STACK,
     };
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.write_perm);
+    BLE_GAP_CONN_SEC_MODE_SET_ENC_WITH_MITM(&attr_md.read_perm);
+    BLE_GAP_CONN_SEC_MODE_SET_ENC_WITH_MITM(&attr_md.write_perm);
 
     const ble_uuid_t ble_uuid{
         .uuid = _uuid,

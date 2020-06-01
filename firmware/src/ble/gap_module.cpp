@@ -43,7 +43,7 @@ namespace ble::gap {
 
     static ble_opt_t m_static_pin_option;
 
-    static uint8_t passkey[] = "123455";
+    static uint8_t passkey[] = "123456";
 
     m_static_pin_option.gap_opt.passkey.p_passkey = &passkey[0];
 

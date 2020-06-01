@@ -25,10 +25,12 @@
 #include "rv3028.hpp"
 #include "timetable_service_module.hpp"
 
+#include "state_machine.hpp"
+
 namespace ble {
   namespace {
-    constexpr auto BLE_OBSERVER_PRIORITY =
-        3;  //!< Application's BLE observer priority. You shouldn't need to modify this value
+    constexpr auto BLE_OBSERVER_PRIORITY = 3;
+    volatile auto  m_connection_failed   = false;
 
     void gap_phy_update(const uint16_t conn_handle) {
       constexpr ble_gap_phys_t preferred_phys = {
@@ -41,7 +43,7 @@ namespace ble {
 
     void ble_event_handler(ble_evt_t const *p_ble_evt, void *p_context) {
       ret_code_t err_code = NRF_SUCCESS;
-      NRF_LOG_INFO("ble event %u", p_ble_evt->header.evt_id);
+      //   NRF_LOG_INFO("ble event %u", p_ble_evt->header.evt_id);
 
       pm_handler_secure_on_connection(p_ble_evt);
 
@@ -55,24 +57,25 @@ namespace ble {
           qwr::conn_handle_set(connection::get_handle());
 
           gap_phy_update(p_ble_evt->evt.gap_evt.conn_handle);
+          m_connection_failed = false;
           break;
 
         case BLE_GAP_EVT_DISCONNECTED:
           NRF_LOG_INFO("Disconnected");
-          pm::delete_disconnected_bonds();
           connection::set_handle(BLE_CONN_HANDLE_INVALID);
 
-          uint8_t  hour;
-          uint16_t minute;
-          timetable_service::morning_curfew_characteristic.get().get(hour, minute);
-          NRF_LOG_INFO("morning_curfew: hour: %u, minute: %u", hour, minute);
-
-          TimeException timeException;
-          if (timetable_service::active_exceptions_characteristic.get().get(0, timeException)) {
-            NRF_LOG_INFO(
-                "active exceptions 1: %u -> %u", timeException.start_time, timeException.end_time);
+          if ((not m_connection_failed) and (pm::is_bonded())) {
+            NRF_LOG_INFO("Bonded and Success Disconnected");
+            timetable_service::store_data_to_eeprom();
+            if (state_machine::is_in_break()) {
+              state_machine::end_work_period(true);
+            } else {
+              state_machine::start_work_period();
+            }
+          } else {
+            NRF_LOG_INFO("Unbonded or failure Disconnected");
+            advertising::start();
           }
-
           break;
 
         case BLE_GAP_EVT_DATA_LENGTH_UPDATE:
@@ -80,16 +83,9 @@ namespace ble {
           break;
 
         case BLE_GATTC_EVT_TIMEOUT:
-          // Disconnect on GATT Client timeout event.
-          NRF_LOG_DEBUG("GATT Client Timeout.");
-          err_code = sd_ble_gap_disconnect(p_ble_evt->evt.gattc_evt.conn_handle,
-                                           BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
-          APP_ERROR_CHECK(err_code);
-          break;
-
         case BLE_GATTS_EVT_TIMEOUT:
-          // Disconnect on GATT Server timeout event.
-          NRF_LOG_DEBUG("GATT Server Timeout.");
+          m_connection_failed = true;
+          NRF_LOG_DEBUG("GATT Timeout");
           err_code = sd_ble_gap_disconnect(p_ble_evt->evt.gatts_evt.conn_handle,
                                            BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
           APP_ERROR_CHECK(err_code);

@@ -7,7 +7,7 @@ namespace ble::advertising {
   constexpr uint8_t CONN_CFG_TAG = 1;
 
   void init();
-  void start(const bool delete_bonds = false);
+  void start();
 }  // namespace ble::advertising
 
 #endif  // ! _ADVERTISING_MODULE_HPP
