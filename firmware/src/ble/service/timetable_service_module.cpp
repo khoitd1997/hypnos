@@ -17,6 +17,8 @@
 
 #include "sdk_common.h"
 
+#include "pm_module.hpp"
+
 #include "ble_characteristic.hpp"
 #include "time_exception_list.hpp"
 
@@ -91,7 +93,8 @@ namespace ble::timetable_service {
     TIMETABLE_SERVICE_DEF(m_timetable);
 
     void timetable_service_ble_event_handler(ble_evt_t const *p_ble_evt, void *p_context) {
-      NRF_LOG_INFO("timetable service event received. Event type = %d", p_ble_evt->header.evt_id);
+      //   NRF_LOG_INFO("timetable service event received. Event type = %d",
+      //   p_ble_evt->header.evt_id);
 
       auto p_timetable = static_cast<timetable_service_t *>(p_context);
 
@@ -220,6 +223,7 @@ namespace ble::timetable_service {
       _deserialize(&buf_ptr, std::forward<Args>(args)...);
     }
   };
+  StorageManager storage_manager;
 
 // clang-format off
 #define CHARACTERISTICS_TO_STORE \
@@ -232,7 +236,7 @@ namespace ble::timetable_service {
   void test_storage_manager() {
     NRF_LOG_INFO("Starting storage manager test");
 
-    StorageManager storage_manager;
+    StorageManager test_storage_manager;
 
     const auto morning_curfew = TimeHourMinute{2, 30};
     const auto night_curfew   = TimeHourMinute{23, 45};
@@ -256,7 +260,7 @@ namespace ble::timetable_service {
 
     tokens_left_characteristic.set(tokens_left);
 
-    storage_manager.store(CHARACTERISTICS_TO_STORE);
+    test_storage_manager.store(CHARACTERISTICS_TO_STORE);
 
     {
       morning_curfew_characteristic.set(TimeHourMinute{5, 50});
@@ -273,7 +277,7 @@ namespace ble::timetable_service {
       tokens_left_characteristic.set(11);
     }
 
-    storage_manager.restore(CHARACTERISTICS_TO_STORE);
+    test_storage_manager.restore(CHARACTERISTICS_TO_STORE);
 
     ASSERT(morning_curfew_characteristic.get() == morning_curfew);
     ASSERT(night_curfew_characteristic.get() == night_curfew);
@@ -290,6 +294,8 @@ namespace ble::timetable_service {
   }
 
   void init() {
+    NRF_LOG_INFO("Initting Timetable Characteristic");
+    NRF_LOG_FLUSH();
     m_timetable.conn_handle = BLE_CONN_HANDLE_INVALID;
 
     ble_uuid128_t base_uuid{TIMETABLE_SERVICE_UUID_BASE};
@@ -316,6 +322,11 @@ namespace ble::timetable_service {
 
     current_unix_time_characteristic.init();
 
-    // test_storage_manager();
+    if (pm::is_bonded()) {
+      NRF_LOG_INFO("Restoring timetable characteristics");
+      storage_manager.restore(CHARACTERISTICS_TO_STORE);
+    }
   }
+
+  void store_data_to_eeprom() { storage_manager.store(CHARACTERISTICS_TO_STORE); }
 }  // namespace ble::timetable_service

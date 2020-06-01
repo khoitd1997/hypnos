@@ -94,6 +94,7 @@ else()
         src/rv3028.cpp
         src/misc_module.cpp
         src/adc_module.cpp
+        src/state_machine.cpp
         src/ble/advertising_module.cpp
         src/ble/qwr_module.cpp
         src/ble/pm_module.cpp

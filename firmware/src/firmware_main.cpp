@@ -88,6 +88,8 @@
 #include "rv3028.hpp"
 #include "twi_module.hpp"
 
+#include "state_machine.hpp"
+
 #include "misc_module.hpp"
 
 /**@brief Callback function for asserts in the SoftDevice.
@@ -111,42 +113,14 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t* p_file_name) {
 // TODO(khoi): Remove this after development is done
 #pragma GCC diagnostic ignored "-Wunused-function"
 
-// static void reset() { pm::delete_all_bonds_unsafe(); }
+// static void reset() {
+// ble::pm::delete_all_bonds_unsafe();
+// restart MCU
+// }
 
 // void testFunc() { SEGGER_SYSVIEW_RecordU32(0 + testModule.EventOffset, 5); }
 
 APP_TIMER_DEF(m_timer_id);
-
-static bool isInBreak() {
-  auto&          rtc = RV3028::get();
-  TimeHourMinute curr_hour_minute{rtc.getHours(), rtc.getMinutes()};
-  const auto     curr_unix_time = rtc.getUNIX();
-
-  const auto active_exceptions = ble::timetable_service::active_exceptions_characteristic.get();
-  for (size_t i = 0; i < active_exceptions.size(); ++i) {
-    TimeException e;
-    active_exceptions.get(i, e);
-
-    if ((curr_unix_time >= e.start_time) && (curr_unix_time <= e.end_time)) { return false; }
-  }
-
-  if ((TimeHourMinute::difftime(
-           curr_hour_minute, ble::timetable_service::morning_curfew_characteristic.get()) <= 0) ||
-      (TimeHourMinute::difftime(curr_hour_minute,
-                                ble::timetable_service::night_curfew_characteristic.get()) >= 0)) {
-    return true;
-  }
-
-  if (rtc.readAlarmInterruptFlag() || rtc.readTimerInterruptFlag()) { return true; }
-
-  const auto break_start = rtc.getTimeStampInUNIX();
-  if ((rtc.getUNIX() - break_start) <=
-      ble::timetable_service::break_duration_characteristic.get() * 60) {
-    return true;
-  }
-
-  return false;
-}
 
 constexpr nrfx_gpiote_pin_t COMPUTER_SWITCH_PIN     = NRF_GPIO_PIN_MAP(0, 2);
 constexpr nrfx_gpiote_pin_t USER_INPUT_PIN          = NRF_GPIO_PIN_MAP(0, 3);
@@ -165,26 +139,19 @@ int main(void) {
   twi::init();
   auto& rtc = RV3028::get();
   rtc.init(RTC_TIME_STAMP_PIN, true, true, false);
-  //   rtc.enableExternalEventInterrupt(true, false);
   //   rtc.setToCompilerTime();
-  //   rtc.enableClockOut(0);
-  //   rtc.disableClockOut();
-
-  rtc.disableAlarmInterrupt();
-  rtc.clearAlarmInterruptFlag();
-  rtc.disableTimerInterrupt();
-  rtc.clearTimerInterruptFlag();
-  rtc.clearClockOutputInterruptFlag();
-  //   NRF_LOG_INFO("isInBreak: %d", isInBreak());
-  rtc.setTimer(false, 1, 6, true, true, true);
-
-  //   rtc.enableAlarmInterrupt(3, 19, 0, false, 4, true);
-  //   rtc.enableInterruptControlledClockout(0);
+  // NOTE: MCU automatically switches to external LFCLK when it's available
+  rtc.enableClockOut(0);
+  rtc.enableTimeStamp();
 
   ble::init();
   adc::init();
   ble::gap::init();
   ble::gatt::init();
+  ble::advertising::init();
+  ble::connection::init();
+  ble::pm::init();
+  ble::pm::delete_all_bonds_unsafe();
 
   ble::qwr::init();
 
@@ -193,40 +160,21 @@ int main(void) {
   ble::bms::init();
   ble::bas::init();
 
-  ble::advertising::init();
+  const auto wakeup_reason = power::get_wakeup_reason();
+  NRF_LOG_INFO("Wakeup Reason: %d", wakeup_reason);
 
-  ble::connection::init();
-  ble::pm::init();
-
-  //   NRF_LOG_INFO("rtc: %s", rtc.stringTime());
-  //   NRF_LOG_FLUSH();
-
-  //   //   misc::timer::create(APP_TIMER_MODE_REPEATED, &m_timer_id, [](void* ctx) {
-  //   testFunc();
-  //   });
-  //   //   app_timer_start(m_timer_id, APP_TIMER_TICKS(2000), nullptr);
-
-  //   NRF_LOG_INFO("Bond Management example started.");
-
-  ble::advertising::start();
-
-  //   misc::timer::test_sleep();
-
-  //   rtc.enableTimeStamp();
-  //   rtc.clearTimeStamp();
-  //   rtc.makeTimeStamp();
-  //   NRF_LOG_INFO("%u %u", rtc.getUNIX(), rtc.getTimeStampInUNIX());
-
-  //   NRF_LOG_INFO("sleeping");
-  //   NRF_LOG_FLUSH();
-  // TODO(khoi): Create timestamp when going to sleep when starting break
-  //   power::sleep();
+  if ((not ble::pm::is_bonded()) or (power::Wakeup_Reason::WORK_PERIOD_END == wakeup_reason) or
+      (power::Wakeup_Reason::NONE == wakeup_reason)) {
+    ble::advertising::start();
+  } else if (power::Wakeup_Reason::USER_INPUT == wakeup_reason) {
+    if (state_machine::is_in_break()) {
+      state_machine::end_work_period(false);
+    } else {
+      state_machine::start_work_period();
+    }
+  }
 
   for (;;) {
-    // nrf_delay_ms(5000);
-    // NRF_LOG_INFO("rtc: %s", rtc.stringTime());
-    // NRF_LOG_FLUSH();
-
     if (!NRF_LOG_PROCESS()) { power::run(); }
   }
 }

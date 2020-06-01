@@ -21,6 +21,6 @@ namespace ble::timetable_service {
   extern BleCharacteristic<unix_time_t>& current_unix_time_characteristic;
 
   void init();
-
+  void store_data_to_eeprom();
 }  // namespace ble::timetable_service
 #endif

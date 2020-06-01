@@ -695,7 +695,7 @@ void RV3028::enableTimeStamp() {
   clearBit(RV3028_EVENTCTRL, EVENTCTRL_TSS);
   setBit(RV3028_CTRL2, CTRL2_TSE);
 }
-void RV3028::makeTimeStamp() {
+void RV3028::createTimeStamp() {
   if (readBit(RV3028_EVENTCTRL, EVENTCTRL_EHL)) {
     nrf_drv_gpiote_out_set(_time_stamp_pin);
     nrf_delay_us(500);

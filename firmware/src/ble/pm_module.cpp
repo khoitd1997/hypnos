@@ -15,7 +15,7 @@
 
 namespace ble::pm {
   namespace {
-    constexpr uint8_t SEC_PARAM_BOND            = 0;
+    constexpr uint8_t SEC_PARAM_BOND            = 1;
     constexpr uint8_t SEC_PARAM_MITM            = 1;
     constexpr uint8_t SEC_PARAM_LESC            = 0;
     constexpr uint8_t SEC_PARAM_KEYPRESS        = 0;
@@ -78,11 +78,13 @@ namespace ble::pm {
         } break;
 
         case PM_EVT_CONN_SEC_FAILED:
-          connection::set_handle(BLE_CONN_HANDLE_INVALID);
+          NRF_LOG_INFO("failed to bond");
+          sd_ble_gap_disconnect(connection::get_handle(), BLE_HCI_AUTHENTICATION_FAILURE);
           break;
 
+        case PM_EVT_PEER_DELETE_SUCCEEDED:
         case PM_EVT_PEERS_DELETE_SUCCEEDED:
-          advertising::start();
+          sd_ble_gap_disconnect(connection::get_handle(), BLE_HCI_AUTHENTICATION_FAILURE);
           break;
 
         case PM_EVT_BONDED_PEER_CONNECTED:
@@ -117,10 +119,10 @@ namespace ble::pm {
     sec_param.min_key_size = SEC_PARAM_MIN_KEY_SIZE;
     sec_param.max_key_size = SEC_PARAM_MAX_KEY_SIZE;
 
-    //   sec_param.kdist_own.enc  = 1;
-    //   sec_param.kdist_own.id   = 1;
-    //   sec_param.kdist_peer.enc = 1;
-    //   sec_param.kdist_peer.id  = 1;
+    sec_param.kdist_own.enc  = 1;
+    sec_param.kdist_own.id   = 1;
+    sec_param.kdist_peer.enc = 1;
+    sec_param.kdist_peer.id  = 1;
 
     err_code = pm_sec_params_set(&sec_param);
     APP_ERROR_CHECK(err_code);

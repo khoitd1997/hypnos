@@ -6,36 +6,42 @@ Sleep ---> BondedCheck: AnyWakeupEvent
 
 state Unbonded {
     UnbondedAdvertising --> UnbondedAdvertising: TimedOut
-    UnbondedAdvertising --> Bonding: Success
-    Bonding-->UnbondedAdvertising: Fail
+    UnbondedAdvertising --> UnbondedConnected: Success
+    UnbondedConnected-->UnbondedAdvertising: Fail
+    UnbondedConnected: Try to Bond with Clients
 }
 BondedCheck ---> UnbondedAdvertising: Else
 
 state Bonded {
     state WakeupReason <<choice>>
-    WakeupReason -> InitiateShutDown: UserPushButtonEvent[isBreak]
-        InitiateShutDown --> Sleep
-        InitiateShutDown: Toggle MOSFET
-        InitiateShutDown: Enable UserPushButtonEvent Interrupt
+    WakeupReason -> EndWorkPeriod: UserPushButtonEvent[isBreak]
+        EndWorkPeriod --> Sleep
+        EndWorkPeriod: Actuate MOSFET
+        EndWorkPeriod: Configure Sleep to Enable UserPushButtonEvent Wakeup
+        EndWorkPeriod: Configure Sleep to Disable WorkPeriodEndEvent Wakeup
+        EndWorkPeriod: CreateTimeStamp[IsStillBreak or TimedOut]
 
     WakeupReason -> StartWorkPeriod: UserPushButtonEvent[isNotBreak]
         StartWorkPeriod: Set Timer to Next Work Period End
-        StartWorkPeriod: Disable UserPushButtonEvent Interrupt
+        StartWorkPeriod: Configure Sleep to Disable UserPushButtonEvent Wakeup
+        StartWorkPeriod: Configure Sleep to Enable WorkPeriodEndEvent Wakeup
         StartWorkPeriod --> Sleep
 
     WakeupReason -> BondedAdvertising: WorkPeriodEndEvent
-        BondedAdvertising --> InitiateShutDown: TimedOut
+        BondedAdvertising --> EndWorkPeriod: TimedOut
 
-        BondedAdvertising --> Connected: Success
-        Connected: Sync Characteristics
-        Bonding---->Connected: Success
+        BondedAdvertising --> BondedConnected: Success
+        BondedConnected: Sync Characteristics
+        UnbondedConnected---->BondedConnected: Success
         state AfterConnectBreakCheck <<choice>>
-        Connected ---> AfterConnectBreakCheck: Success
-        Connected -> BondedAdvertising: Fail
-        Connected ----> UnbondedAdvertising: ClientUnbond
+        BondedConnected ---> WriteDataToEEPROM: Success
+        WriteDataToEEPROM --> AfterConnectBreakCheck
+        BondedConnected -> BondedAdvertising: Fail
+        BondedConnected ----> UnbondedAdvertising: ClientUnbond
 
-        AfterConnectBreakCheck --> InitiateShutDown: IsStillBreak
+        AfterConnectBreakCheck --> EndWorkPeriod: IsStillBreak
         AfterConnectBreakCheck ---> StartWorkPeriod: Else
 }
-BondedCheck -> WakeupReason: IsBonded
+BondedCheck -> ReadDataFromEEPROM: IsBonded
+ReadDataFromEEPROM -> WakeupReason
 @enduml

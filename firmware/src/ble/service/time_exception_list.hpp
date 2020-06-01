@@ -43,6 +43,9 @@ class TimeExceptionList : public BleCustomCharacteristicValueType {
   bool push(const TimeException &time_exception);
   bool get(const size_t index, TimeException &time_exception) const;
 
+  bool is_in_time_exception(const unix_time_t curr_time) const;
+  bool get_active_exception(const unix_time_t curr_time, TimeException &exception) const;
+
   friend bool operator==(const TimeExceptionList &lhs, const TimeExceptionList &rhs);
 };
 

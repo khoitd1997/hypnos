@@ -298,7 +298,7 @@ class RV3028 {
   void clearClockOutputInterruptFlag();
 
   void     enableTimeStamp();
-  void     makeTimeStamp();
+  void     createTimeStamp();
   uint32_t getTimeStampInUNIX();
   void     clearTimeStamp();
 

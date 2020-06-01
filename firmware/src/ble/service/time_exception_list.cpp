@@ -142,6 +142,32 @@ bool TimeExceptionList::get(const size_t index, TimeException &time_exception) c
   return true;
 }
 
+bool TimeExceptionList::is_in_time_exception(const unix_time_t curr_time) const {
+  for (size_t i = 0; i < size(); ++i) {
+    TimeException e;
+    get(i, e);
+
+    if ((curr_time >= e.start_time) && (curr_time <= e.end_time)) { return true; }
+  }
+
+  return false;
+}
+
+bool TimeExceptionList::get_active_exception(const unix_time_t curr_time,
+                                             TimeException &   exception) const {
+  for (size_t i = 0; i < size(); ++i) {
+    TimeException e;
+    get(i, e);
+
+    if ((curr_time >= e.start_time) && (curr_time <= e.end_time)) {
+      exception = e;
+      return true;
+    }
+  }
+
+  return false;
+}
+
 bool operator==(const TimeExceptionList &lhs, const TimeExceptionList &rhs) {
   if (lhs.size() != rhs.size()) { return false; }
   for (size_t i = 0; i < lhs.size(); ++i) {
