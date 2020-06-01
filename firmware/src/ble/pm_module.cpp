@@ -79,12 +79,12 @@ namespace ble::pm {
 
         case PM_EVT_CONN_SEC_FAILED:
           NRF_LOG_INFO("failed to bond");
-          sd_ble_gap_disconnect(connection::get_handle(), BLE_HCI_AUTHENTICATION_FAILURE);
+          sd_ble_gap_disconnect(p_evt->conn_handle, BLE_HCI_AUTHENTICATION_FAILURE);
           break;
 
         case PM_EVT_PEER_DELETE_SUCCEEDED:
         case PM_EVT_PEERS_DELETE_SUCCEEDED:
-          sd_ble_gap_disconnect(connection::get_handle(), BLE_HCI_AUTHENTICATION_FAILURE);
+          sd_ble_gap_disconnect(p_evt->conn_handle, BLE_HCI_AUTHENTICATION_FAILURE);
           break;
 
         case PM_EVT_BONDED_PEER_CONNECTED:
