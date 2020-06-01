@@ -417,12 +417,12 @@ Set the alarm mode in the following way:
 If you want to set a weekday alarm (setWeekdayAlarm_not_Date = true), set 'date_or_weekday' from 0
 (Sunday) to 6 (Saturday)
 ********************************/
-void RV3028::enableAlarmInterrupt(uint8_t min,
-                                  uint8_t hour,
-                                  uint8_t date_or_weekday,
-                                  bool    setWeekdayAlarm_not_Date,
-                                  uint8_t mode,
-                                  bool    enable_clock_output) {
+void RV3028::setAlarmInterrupt(uint8_t min,
+                               uint8_t hour,
+                               uint8_t date_or_weekday,
+                               bool    setWeekdayAlarm_not_Date,
+                               uint8_t mode,
+                               bool    enable_clock_output) {
   // disable Alarm Interrupt to prevent accidental interrupts during configuration
   disableAlarmInterrupt();
   clearAlarmInterruptFlag();
@@ -448,9 +448,6 @@ void RV3028::enableAlarmInterrupt(uint8_t min,
   if (mode & 0b100) alarmTime[2] |= 1 << DATE_AE_WD;
   // Write registers
   writeMultipleRegisters(RV3028_MINUTES_ALM, alarmTime, 3);
-
-  // enable Alarm Interrupt
-  enableAlarmInterrupt();
 
   // Clock output?
   if (enable_clock_output)

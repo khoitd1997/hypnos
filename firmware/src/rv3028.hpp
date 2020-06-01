@@ -253,12 +253,12 @@ class RV3028 {
                        true);  // Set the UNIX Time (Real Time and UNIX Time are INDEPENDENT!)
   uint32_t getUNIX();
 
-  void enableAlarmInterrupt(uint8_t min,
-                            uint8_t hour,
-                            uint8_t date_or_weekday,
-                            bool    setWeekdayAlarm_not_Date,
-                            uint8_t mode,
-                            bool    enable_clock_output = false);
+  void setAlarmInterrupt(uint8_t min,
+                         uint8_t hour,
+                         uint8_t date_or_weekday,
+                         bool    setWeekdayAlarm_not_Date,
+                         uint8_t mode,
+                         bool    enable_clock_output = false);
   void enableAlarmInterrupt();
   void disableAlarmInterrupt();
   bool readAlarmInterruptFlag();

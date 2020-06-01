@@ -293,6 +293,30 @@ namespace ble::timetable_service {
     NRF_LOG_FLUSH();
   }
 
+  void load_test_data() {
+    const auto morning_curfew = TimeHourMinute{2, 30};
+    const auto night_curfew   = TimeHourMinute{23, 45};
+
+    uint8_t work_duration  = 20;
+    uint8_t break_duration = 50;
+
+    TimeExceptionList exception_list;
+    exception_list.push(TimeException{2222, 3333});
+    exception_list.push(TimeException{40000, 90000});
+
+    uint8_t tokens_left = 44;
+
+    morning_curfew_characteristic.set(morning_curfew);
+    night_curfew_characteristic.set(night_curfew);
+
+    work_duration_characteristic.set(work_duration);
+    break_duration_characteristic.set(break_duration);
+
+    active_exceptions_characteristic.set(exception_list);
+
+    tokens_left_characteristic.set(tokens_left);
+  }
+
   void init() {
     NRF_LOG_INFO("Initting Timetable Characteristic");
     NRF_LOG_FLUSH();

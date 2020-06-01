@@ -54,7 +54,7 @@ namespace state_machine {
     rtc.setTimer(false, 1, timer_value, true, true, true);
 
     const auto night_curfew = ble::timetable_service::night_curfew_characteristic.get();
-    rtc.enableAlarmInterrupt(night_curfew.getMinute(), night_curfew.getHour(), 0, false, 4, false);
+    rtc.setAlarmInterrupt(night_curfew.getMinute(), night_curfew.getHour(), 0, false, 4, false);
 
     power::sleep(false, true);
   }
