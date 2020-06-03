@@ -1,4 +1,4 @@
-18625877097276582
+18632241504649582
 Battery
 BatteryHolder_Bulgin_BX0036_1xC
 Bulgin Battery Holder, BX0036, Battery Type C (https://www.bulgin.com/products/pub/media/bulgin/data/Battery_holders.pdf)
@@ -51590,12 +51590,40 @@ heatsink
 2
 1
 Hypnos
-XCVR_BT840F
+BAT_BK-883
+
+
+0
+3
+3
+Hypnos
+BT840F
 
 
 0
 65
 65
+Hypnos
+FDN361BN
+SuperSOT-3
+
+0
+3
+3
+Hypnos
+RV-3028-C7
+
+
+0
+8
+8
+Hypnos
+SW_KSR223GLFG
+Switch Tactile N.O. SPST Round Button Gull Wing 0.01A 32VDC 0.2VA 200000Cycles 2N SMD Automotive T/R
+
+0
+2
+2
 Inductor_SMD
 L_6.3x6.3_H3
 Choke, SMD, 6.3x6.3mm 3mm height
