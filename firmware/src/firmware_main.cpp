@@ -115,11 +115,11 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t* p_file_name) {
 
 // void testFunc() { SEGGER_SYSVIEW_RecordU32(0 + testModule.EventOffset, 5); }
 
-constexpr nrfx_gpiote_pin_t COMPUTER_SWITCH_PIN     = NRF_GPIO_PIN_MAP(0, 2);
+constexpr nrfx_gpiote_pin_t COMPUTER_SWITCH_PIN     = NRF_GPIO_PIN_MAP(0, 9);
 constexpr nrfx_gpiote_pin_t USER_INPUT_PIN          = NRF_GPIO_PIN_MAP(0, 3);
-constexpr nrfx_gpiote_pin_t RTC_INTERRUPT_INPUT_PIN = NRF_GPIO_PIN_MAP(0, 9);
+constexpr nrfx_gpiote_pin_t RTC_INTERRUPT_INPUT_PIN = NRF_GPIO_PIN_MAP(0, 2);
 constexpr nrfx_gpiote_pin_t RTC_TIME_STAMP_PIN      = NRF_GPIO_PIN_MAP(0, 10);
-constexpr nrfx_gpiote_pin_t RESET_PIN               = NRF_GPIO_PIN_MAP(0, 13);
+constexpr nrfx_gpiote_pin_t RESET_PIN               = NRF_GPIO_PIN_MAP(0, 11);
 
 void configure_reset_pin() {
   nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_HITOLO(false);
