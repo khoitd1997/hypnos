@@ -1340,7 +1340,6 @@
 #endif
 // <o> GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS - Number of lower power input pins
 #ifndef GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS
-// only one button or wake up pin can be used at the same time
 #define GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS 3
 #endif
 

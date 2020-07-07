@@ -48,6 +48,7 @@
 #include "nordic_common.h"
 #include "nrf.h"
 
+#include "nrf_pwr_mgmt.h"
 #include "nrf_sdh.h"
 #include "nrf_sdh_ble.h"
 #include "nrf_sdh_soc.h"
@@ -91,6 +92,7 @@
 #include "state_machine.hpp"
 
 #include "misc_module.hpp"
+#include "nrf_log_default_backends.h"
 
 /**@brief Callback function for asserts in the SoftDevice.
  *
@@ -123,7 +125,7 @@ constexpr nrfx_gpiote_pin_t RESET_PIN               = NRF_GPIO_PIN_MAP(0, 11);
 
 void configure_reset_pin() {
   nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_HITOLO(false);
-  in_config.pull                       = NRF_GPIO_PIN_PULLUP;
+  in_config.pull                       = NRF_GPIO_PIN_NOPULL;
 
   const auto err_code = nrf_drv_gpiote_in_init(
       RESET_PIN, &in_config, [](nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action) {
@@ -136,13 +138,17 @@ void configure_reset_pin() {
   nrf_drv_gpiote_in_event_enable(RESET_PIN, true);
 }
 
-APP_TIMER_DEF(m_timer_id);
+// APP_TIMER_DEF(m_timer_id);
 
 int main(void) {
-  misc::log::init();
-  misc::systemview::init();
-  misc::timer::init();
-  power::init(USER_INPUT_PIN, RTC_INTERRUPT_INPUT_PIN);
+  {
+    const auto err_code = NRF_LOG_INIT(NULL);
+    APP_ERROR_CHECK(err_code);
+
+    NRF_LOG_DEFAULT_BACKENDS_INIT();
+  }
+  auto err_code = nrf_pwr_mgmt_init();
+  APP_ERROR_CHECK(err_code);
   {
     const auto err_code = nrf_drv_gpiote_init();
     APP_ERROR_CHECK(err_code);
@@ -150,53 +156,80 @@ int main(void) {
 
   configure_reset_pin();
 
-  computer_switch::init(COMPUTER_SWITCH_PIN);
-
-  twi::init();
-  auto& rtc = RV3028::get();
-  rtc.init(RTC_TIME_STAMP_PIN, true, true, false);
-  //   rtc.setToCompilerTime();
-  // NOTE: MCU automatically switches to external LFCLK when it's available
-  rtc.enableClockOut(0);
-  rtc.enableTimeStamp();
-  rtc.disableAlarmInterrupt();
-  rtc.disableTimerInterrupt();
-
-  ble::init();
-  adc::init();
-  ble::gap::init();
-  ble::gatt::init();
-  ble::advertising::init();
-  ble::connection::init();
-  ble::pm::init();
-  //   ble::pm::delete_all_bonds_unsafe();
-
-  ble::qwr::init();
-
-  ble::timetable_service::init();
-
-  ble::bms::init();
-  ble::bas::init();
-
-  NRF_LOG_PROCESS();
-  power::sleep(false, true);
-
-  const auto wakeup_reason = power::get_wakeup_reason();
-  NRF_LOG_INFO("Wakeup Reason: %d", wakeup_reason);
-
-  if ((not ble::pm::is_bonded()) or (power::Wakeup_Reason::WORK_PERIOD_END == wakeup_reason) or
-      (power::Wakeup_Reason::NONE == wakeup_reason)) {
-    ble::advertising::start();
-  } else if (power::Wakeup_Reason::USER_INPUT == wakeup_reason) {
-    if (state_machine::is_in_break()) {
-      state_machine::end_work_period(false);
-    } else {
-      state_machine::start_work_period();
-    }
+  // need to initialize but not call nrf_drv_gpiote_in_event_enable otherwise
+  // latch clear doesn't seem to work
+  {
+    nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_HITOLO(false);
+    in_config.pull                       = NRF_GPIO_PIN_NOPULL;
+    const auto err_code = nrf_drv_gpiote_in_init(RTC_INTERRUPT_INPUT_PIN, &in_config, nullptr);
+    APP_ERROR_CHECK(err_code);
+    nrf_drv_gpiote_in_event_disable(RTC_INTERRUPT_INPUT_PIN);
+  }
+  {
+    nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_HITOLO(false);
+    in_config.pull                       = NRF_GPIO_PIN_NOPULL;
+    const auto err_code = nrf_drv_gpiote_in_init(USER_INPUT_PIN, &in_config, nullptr);
+    APP_ERROR_CHECK(err_code);
+    nrf_drv_gpiote_in_event_disable(USER_INPUT_PIN);
   }
 
-  for (;;) {
-    if (!NRF_LOG_PROCESS()) { power::run(); }
+  NRF_LOG_INFO("User input pin state: %d", nrf_gpio_pin_read(USER_INPUT_PIN));
+  NRF_LOG_INFO("RTC input pin state: %d", nrf_gpio_pin_read(RTC_INTERRUPT_INPUT_PIN));
+  NRF_LOG_INFO("Reset input pin state: %d", nrf_gpio_pin_read(RESET_PIN));
+
+  if (nrf_gpio_pin_latch_get(USER_INPUT_PIN)) { NRF_LOG_INFO("user input latch set"); }
+  if (nrf_gpio_pin_latch_get(RTC_INTERRUPT_INPUT_PIN)) { NRF_LOG_INFO("rtc interrupt latch set"); }
+  if (nrf_gpio_pin_latch_get(RESET_PIN)) { NRF_LOG_INFO("reset latch set"); }
+  NRF_LOG_INFO("Latch is %x", NRF_GPIO->LATCH);
+
+  nrf_delay_ms(500);
+  NRF_GPIO->LATCH = NRF_GPIO->LATCH;
+  (void)NRF_TIMER1->EVENTS_COMPARE[0];
+
+  // give the latch some time to clear
+  NRF_LOG_INFO("Yo");
+  NRF_LOG_INFO("Yo");
+  NRF_LOG_INFO("Yo");
+  NRF_LOG_INFO("Yo");
+  NRF_LOG_FLUSH();
+
+  while (nrf_gpio_pin_latch_get(USER_INPUT_PIN) ||
+         nrf_gpio_pin_latch_get(RTC_INTERRUPT_INPUT_PIN) || nrf_gpio_pin_latch_get(RESET_PIN)) {
+    // make sure the latch is cleared
+  }
+
+  NRF_LOG_INFO("Preparing to Sleep, latch: %d", NRF_GPIO->LATCH);
+  NRF_LOG_FLUSH();
+
+  nrf_drv_gpiote_in_event_enable(RTC_INTERRUPT_INPUT_PIN, true);
+  nrf_drv_gpiote_in_event_enable(USER_INPUT_PIN, true);
+
+  {
+    auto err_code = nrf_sdh_enable_request();
+    APP_ERROR_CHECK(err_code);
+
+    // Fetch the start address of the application RAM.
+    uint32_t ram_start;
+    err_code = nrf_sdh_ble_default_cfg_set(1, &ram_start);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = nrf_sdh_ble_enable(&ram_start);
+    APP_ERROR_CHECK(err_code);
+
+    NRF_SDH_BLE_OBSERVER(m_ble_observer, 3, nullptr, NULL);
+
+    ble_opt_t opt;
+
+    memset(&opt, 0x00, sizeof(opt));
+    opt.common_opt.conn_evt_ext.enable = 1;
+
+    err_code = sd_ble_opt_set(BLE_COMMON_OPT_CONN_EVT_EXT, &opt);
+    APP_ERROR_CHECK(err_code);
+  }
+
+  sd_power_system_off();
+  while (1) {
+    // in debug mode, sleep is emulated
   }
 }
 

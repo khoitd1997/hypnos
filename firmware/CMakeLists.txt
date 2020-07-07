@@ -3,13 +3,13 @@ project(hypnos C CXX ASM)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(platform_indepdendent_c_cpp_debug_flags "-Og -DDEBUG")
+set(platform_indepdendent_c_cpp_debug_flags "-O0 -DDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG
     "${CMAKE_CXX_FLAGS_DEBUG} ${platform_indepdendent_c_cpp_debug_flags}")
 set(CMAKE_C_FLAGS_DEBUG
     "${CMAKE_C_FLAGS_DEBUG} ${platform_indepdendent_c_cpp_debug_flags}")
 
-set(platform_indepdendent_c_cpp_release_flags "-O3")
+set(platform_indepdendent_c_cpp_release_flags "-O0")
 set(CMAKE_CXX_FLAGS_RELEASE
     "${CMAKE_CXX_FLAGS_RELEASE} ${platform_indepdendent_c_cpp_release_flags}")
 set(CMAKE_C_FLAGS_RELEASE

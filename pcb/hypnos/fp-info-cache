@@ -1,4 +1,4 @@
-18632241504649582
+18635425005653582
 Battery
 BatteryHolder_Bulgin_BX0036_1xC
 Bulgin Battery Holder, BX0036, Battery Type C (https://www.bulgin.com/products/pub/media/bulgin/data/Battery_holders.pdf)
@@ -51590,7 +51590,7 @@ heatsink
 2
 1
 Hypnos
-BAT_BK-883
+BC-2003-TR
 
 
 0
@@ -51603,6 +51603,20 @@ BT840F
 0
 65
 65
+Hypnos
+Conn-Female-RightAnglex3-SMD
+
+
+0
+3
+3
+Hypnos
+Conn-Female-RightAnglex7-SMD
+
+
+0
+7
+7
 Hypnos
 FDN361BN
 SuperSOT-3
